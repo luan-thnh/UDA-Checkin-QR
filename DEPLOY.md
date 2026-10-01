@@ -28,7 +28,7 @@ Supabase (Postgres)  <--  Vercel "checkin-api" (Functions)  <--  Vercel "checkin
 2. **Configure Project**:
    - **Root Directory**: `apps/api`
    - **Build Command**: `pnpm --filter @checkin/shared build`
-   - Output: để mặc định (Functions, không cần output dir).
+   - Output Directory: để mặc định (repo đã có `apps/api/vercel.json` trỏ sang `public/` giữ chỗ vì project này chỉ có Functions).
 3. **Environment Variables** (nhập đủ 8 biến, môi trường Production):
 
    | Biến | Lấy ở đâu |
@@ -97,4 +97,5 @@ echo $TOKEN
 | Quét QR mở sai / không mở app | `MINI_APP_ID` sai hoặc chưa Redeploy api sau khi set |
 | Mini App báo GPS lỗi trên máy thật | thiếu `ZALO_APP_SECRET`, hoặc chưa xin `scope.userLocation`, hoặc user từ chối quyền |
 | `ALREADY_CHECKED` dù chưa điểm danh | đúng luật: MSSV đó đã check-in QR này rồi — tạo QR (phiên) mới để điểm danh tiếp |
+| Vercel build báo `No Output Directory named "public"` | đã fix bằng `apps/api/vercel.json` + `apps/api/public/` (project API không có web tĩnh) — pull code mới rồi Redeploy |
 | Vercel build dashboard lỗi thiếu `@checkin/shared` | `prebuild` phải chạy `pnpm --filter @checkin/shared build` (đã có sẵn trong `package.json`) |
