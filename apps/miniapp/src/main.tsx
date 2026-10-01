@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { MiniApp } from './app';
+import 'zmp-ui/zaui.css';
 import './app.css';
 
 const root = document.getElementById('app');

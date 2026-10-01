@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Button, Header, Input, Page, Spinner, Text, Icon } from 'zmp-ui';
-import { scanQRCode } from 'zmp-sdk/apis';
+import { Box, Button, Header, Input, Page, Spinner, Icon, useNavigate } from 'zmp-ui';
+import api from 'zmp-sdk';
 import {
   haversineMeters,
   parseSessionIdFromQuery,
@@ -14,18 +14,41 @@ import { useCheckinLocation } from '../hooks/useCheckinLocation';
 import { StatusCard } from '../components/StatusCard';
 
 function readSessionId(): string {
-  const params = new URLSearchParams(window.location.search);
-  return parseSessionIdFromQuery({ session: params.get('session') ?? undefined });
+  // 1. Try Zalo SDK getRouteParams
+  try {
+    const routeParams = api.getRouteParams();
+    if (routeParams && routeParams.session) {
+      return parseSessionIdFromQuery({ session: routeParams.session });
+    }
+  } catch (e) {
+    // Ignore if api is not ready
+  }
+
+  // 2. Try window.location.search (Standard URL)
+  let params = new URLSearchParams(window.location.search);
+  let sessionParam = params.get('session');
+
+  // 3. Try window.location.hash (Hash router with query, e.g., #/?session=123)
+  if (!sessionParam && window.location.hash.includes('?')) {
+    const hashQuery = window.location.hash.split('?')[1];
+    params = new URLSearchParams(hashQuery);
+    sessionParam = params.get('session');
+  }
+
+  return parseSessionIdFromQuery({ session: sessionParam ?? undefined });
 }
 
 export function CheckinPage() {
-  const [sessionId] = useState(readSessionId);
+  const navigate = useNavigate();
+  const [sessionId, setSessionId] = useState(readSessionId);
   const [session, setSession] = useState<CheckinSession | null>(null);
   const [sessionError, setSessionError] = useState('');
   const [studentCode, setStudentCode] = useState(() => localStorage.getItem('lastStudentCode') ?? '');
+
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<ApiResponse<AttendSuccessData> | null>(null);
+
   const [alreadyCheckedInLocal, setAlreadyCheckedInLocal] = useState(false);
   const { fix, status, errorMessage, requestLocation } = useCheckinLocation();
 
@@ -115,33 +138,41 @@ export function CheckinPage() {
           <h2 className="mb-2">Chưa có mã phiên</h2>
           <p className="mb-6">{sessionError}</p>
           <Button
-            onClick={async () => {
+            className="btn-submit"
+            onClick={() => {
               try {
-                const { content } = await scanQRCode({});
-                if (content) {
-                  // Neu quet duoc link zalo co chua session=... thi lay ra,
-                  // hoac neu quet duoc dang text session=ID
-                  let newSessionId = '';
-                  try {
-                    const url = new URL(content);
-                    newSessionId = url.searchParams.get('session') || '';
-                  } catch {
-                    if (content.includes('session=')) {
-                      newSessionId = content.split('session=')[1].split('&')[0];
-                    } else {
-                      newSessionId = content;
+                api.scanQRCode({
+                  success: (data) => {
+                    const content = data?.content;
+                    if (content) {
+                      let newSessionId = '';
+                      try {
+                        const url = new URL(content);
+                        newSessionId = url.searchParams.get('session') || '';
+                      } catch {
+                        if (content.includes('session=')) {
+                          newSessionId = content.split('session=')[1].split('&')[0];
+                        } else {
+                          newSessionId = content;
+                        }
+                      }
+                      
+                      if (newSessionId) {
+                        setSessionId(newSessionId);
+                        navigate(`/?session=${encodeURIComponent(newSessionId)}`, { replace: true });
+                      } else {
+                        alert('Mã QR không hợp lệ. Nội dung: ' + content);
+                      }
                     }
+                  },
+                  fail: (error) => {
+                    console.error('Scan fail:', error);
+                    alert('Lỗi quét QR (Có thể do bạn đang dùng bản Web/PC). Chi tiết: ' + JSON.stringify(error));
                   }
-                  
-                  if (newSessionId) {
-                    window.location.href = `/?session=${encodeURIComponent(newSessionId)}`;
-                  } else {
-                    alert('Mã QR không hợp lệ. Không tìm thấy mã phiên.');
-                  }
-                }
+                });
               } catch (error) {
-                console.error(error);
-                alert('Lỗi khi mở camera quét QR.');
+                console.error('Scan catch:', error);
+                alert('Không thể gọi API quét QR: ' + JSON.stringify(error));
               }
             }}
           >
@@ -219,7 +250,7 @@ export function CheckinPage() {
               
               {status === 'loading' ? (
                 <div className="location-status loading">
-                  <Spinner visible size="small" /> <span>Đang định vị...</span>
+                  <Spinner visible /> <span className="ml-2">Đang định vị...</span>
                 </div>
               ) : null}
               

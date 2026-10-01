@@ -44,7 +44,7 @@ export function StatusCard({ code, message, checkedAt }: Props) {
   return (
     <div className={`ci-result ${type}`}>
       <div className="icon-wrapper-small">
-        <Icon icon={ICON_BY_CODE[code]} size={32} style={{ color: iconColor }} />
+        <Icon icon={ICON_BY_CODE[code] as any} size={32} style={{ color: iconColor }} />
       </div>
       <h3>{TITLE_BY_CODE[code]}</h3>
       <p>{message}</p>

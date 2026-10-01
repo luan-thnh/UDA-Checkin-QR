@@ -1,10 +1,17 @@
-import { App } from 'zmp-ui';
+import { App, ZMPRouter, AnimationRoutes, SnackbarProvider } from 'zmp-ui';
+import { Route } from 'react-router-dom';
 import { CheckinPage } from './pages/CheckinPage';
 
 export function MiniApp() {
   return (
     <App>
-      <CheckinPage />
+      <SnackbarProvider>
+        <ZMPRouter>
+          <AnimationRoutes>
+            <Route path="/" element={<CheckinPage />} />
+          </AnimationRoutes>
+        </ZMPRouter>
+      </SnackbarProvider>
     </App>
   );
 }
