@@ -19,7 +19,7 @@ export default async function handler(req: VercelReq, res: VercelRes) {
     let query = supabase.from('students').select('*').order('student_code');
     if (keyword) query = query.or(`student_code.ilike.%${keyword}%,full_name.ilike.%${keyword}%,class_name.ilike.%${keyword}%`);
     const { data } = await query;
-    const rows = (data ?? []).map((row) => ({
+    const rows = (data ?? []).map((row: any) => ({
       studentCode: row.student_code,
       fullName: row.full_name,
       className: row.class_name,
