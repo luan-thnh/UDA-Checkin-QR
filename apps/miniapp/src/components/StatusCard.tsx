@@ -1,3 +1,4 @@
+import { Icon } from 'zmp-ui';
 import type { AttendanceResultCode } from '@checkin/shared';
 
 const CLASS_BY_CODE: Record<AttendanceResultCode, 'success' | 'warn' | 'fail'> = {
@@ -18,6 +19,15 @@ const TITLE_BY_CODE: Record<AttendanceResultCode, string> = {
   INVALID_INPUT: 'Dữ liệu chưa hợp lệ',
 };
 
+const ICON_BY_CODE: Record<AttendanceResultCode, string> = {
+  SUCCESS: 'zi-check-circle-solid',
+  ALREADY_CHECKED: 'zi-info-circle-solid',
+  OUT_OF_RANGE: 'zi-location-solid',
+  SESSION_CLOSED: 'zi-close-circle-solid',
+  STUDENT_NOT_FOUND: 'zi-user-solid',
+  INVALID_INPUT: 'zi-warning-solid',
+};
+
 interface Props {
   code: AttendanceResultCode;
   message: string;
@@ -25,12 +35,21 @@ interface Props {
 }
 
 export function StatusCard({ code, message, checkedAt }: Props) {
+  const type = CLASS_BY_CODE[code];
+  
+  let iconColor = 'var(--primary-deep)';
+  if (type === 'warn') iconColor = '#c2410c';
+  if (type === 'fail') iconColor = 'var(--danger)';
+
   return (
-    <div className={`ci-result ${CLASS_BY_CODE[code]}`}>
+    <div className={`ci-result ${type}`}>
+      <div className="icon-wrapper-small">
+        <Icon icon={ICON_BY_CODE[code]} size={32} style={{ color: iconColor }} />
+      </div>
       <h3>{TITLE_BY_CODE[code]}</h3>
       <p>{message}</p>
       {checkedAt ? (
-        <p style={{ fontSize: 12, marginTop: 4 }}>
+        <p style={{ fontSize: 13, marginTop: 8, color: 'var(--muted)' }}>
           Giờ check-in: {new Date(checkedAt).toLocaleString('vi-VN')}
         </p>
       ) : null}

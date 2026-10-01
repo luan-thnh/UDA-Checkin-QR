@@ -259,6 +259,20 @@ export function createApp() {
       }
     }
 
+    if (req.method === 'GET' && path === '/api/attendances') {
+      if (!requireAuth(req, res)) return;
+      const allAttendances = [...db.attendances.values()].map(a => ({
+        ...a,
+        ...(db.students.get(a.studentCode) ?? {})
+      }));
+      sendJson(res, 200, {
+        code: 'SUCCESS',
+        message: 'OK',
+        data: allAttendances,
+      });
+      return;
+    }
+
     // Tuong thich route cu GET /api/sessions/:id (public)
     if (req.method === 'GET' && path.startsWith('/api/sessions/')) {
       const id = decodeURIComponent(path.replace('/api/sessions/', ''));

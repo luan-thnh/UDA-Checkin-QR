@@ -1,0 +1,13 @@
+{
+  "name": "uda-checkin-qr",
+  "framework": "react-typescript",
+  "package": "zmp-ui",
+  "template": "single-view",
+  "newProject": false,
+  "theming": {
+    "customColor": true,
+    "color": "#00a457",
+    "darkTheme": false,
+    "iconFonts": true
+  }
+}

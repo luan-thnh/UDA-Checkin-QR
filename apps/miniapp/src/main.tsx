@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { MiniApp } from './app';
 import './app.css';
 
-const root = document.getElementById('root');
-if (!root) throw new Error('Missing #root');
+const root = document.getElementById('app');
+if (!root) throw new Error('Missing #app');
 createRoot(root).render(
   <React.StrictMode>
     <MiniApp />

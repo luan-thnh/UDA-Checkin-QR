@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import type { Student } from '@checkin/shared';
 import { downloadWithAuth, fetchStudents, importStudents } from '../services/api';
 import { readStudentRowsFromFile } from '../utils/excel';
+import { Search, Upload, Download, Filter, Info } from 'lucide-react';
 
 export function StudentsPanel() {
   const [query, setQuery] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
   const [notice, setNotice] = useState('');
   const [noticeError, setNoticeError] = useState(false);
@@ -63,65 +65,126 @@ export function StudentsPanel() {
     }
   }
 
+  const uniqueClasses = useMemo(() => {
+    const cls = new Set(students.map(s => s.className).filter(Boolean));
+    return Array.from(cls).sort();
+  }, [students]);
+
+  const filteredStudents = useMemo(() => {
+    if (!selectedClass) return students;
+    return students.filter(s => s.className === selectedClass);
+  }, [students, selectedClass]);
+
   return (
-    <section className="card">
-      <h3>Sinh viên ({students.length})</h3>
-      <div className="toolbar">
-        <input
-          placeholder="Tìm MSSV / tên / lớp"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            void reload(e.target.value);
-          }}
-        />
-        <label className="btn btn-ghost" style={{ cursor: 'pointer' }}>
-          Import Excel
-          <input
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            hidden
-            onChange={(e) => void handleFile(e.target.files?.[0])}
-          />
-        </label>
-        <button
-          className="btn btn-ghost"
-          onClick={() => downloadWithAuth('/api/students/export', 'danh-sach-sinh-vien.csv')}
-        >
-          Xuất Excel
-        </button>
+    <div className="space-y-6">
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Danh sách Sinh viên</h2>
+          <p className="text-slate-500 mt-1">Quản lý và cập nhật thông tin sinh viên từ Excel</p>
+        </div>
       </div>
-      {notice ? <p className={noticeError ? 'notice error' : 'notice'}>{notice}</p> : null}
-      {loading ? <p style={{ color: 'var(--muted)' }}>Đang tải…</p> : null}
-      {students.length === 0 && !loading ? (
-        <p style={{ color: 'var(--muted)' }}>
-          Chưa có sinh viên nào. Bấm <b>Import Excel</b> để thêm danh sách lớp.
-        </p>
-      ) : null}
-      {students.length > 0 ? (
-        <table className="grid">
-          <thead>
-            <tr>
-              <th>MSSV</th>
-              <th>Họ tên</th>
-              <th>Lớp</th>
-              <th>Khoa</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map((student) => (
-              <tr key={student.studentCode}>
-                <td>
-                  <b>{student.studentCode}</b>
-                </td>
-                <td>{student.fullName}</td>
-                <td>{student.className}</td>
-                <td>{student.faculty ?? ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : null}
-    </section>
+
+      <div className="card">
+        <div className="p-4 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-end bg-slate-50/50">
+          <div className="flex flex-wrap gap-4 flex-1">
+            <div className="relative w-full max-w-[280px]">
+              <label className="label text-xs uppercase tracking-wider text-slate-500 font-semibold">Tìm kiếm</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={16} className="text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  className="input pl-10"
+                  placeholder="MSSV / Tên..."
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    void reload(e.target.value);
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="relative w-48">
+              <label className="label text-xs uppercase tracking-wider text-slate-500 font-semibold">Lọc Lớp</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Filter size={16} className="text-slate-400" />
+                </div>
+                <select 
+                  className="input pl-10 appearance-none bg-white"
+                  value={selectedClass}
+                  onChange={e => setSelectedClass(e.target.value)}
+                >
+                  <option value="">Tất cả các lớp</option>
+                  {uniqueClasses.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <label className="btn btn-primary cursor-pointer shadow-md shadow-primary/20">
+              <Upload size={16} className="mr-2" /> Import Excel
+              <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={(e) => void handleFile(e.target.files?.[0])} />
+            </label>
+            <button className="btn btn-outline" onClick={() => downloadWithAuth('/api/students/export', 'danh-sach-sinh-vien.csv')}>
+              <Download size={16} className="mr-2" /> Xuất Excel
+            </button>
+          </div>
+        </div>
+
+        {notice ? (
+          <div className={`px-4 py-3 border-b flex items-center gap-2 ${noticeError ? 'bg-danger-tint text-danger border-danger/20' : 'bg-success-tint text-success-700 border-success/20'}`}>
+            <Info size={18} /> <span className="font-medium text-sm">{notice}</span>
+          </div>
+        ) : null}
+
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="py-12 text-center text-slate-500">Đang tải dữ liệu...</div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="py-16 flex flex-col items-center justify-center text-slate-500">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <Users size={32} className="text-slate-300" />
+              </div>
+              <p className="text-lg font-medium text-slate-700 mb-1">Chưa có sinh viên nào</p>
+              <p className="text-sm">Bấm <b>Import Excel</b> để thêm danh sách lớp.</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr>
+                  <th className="table-th w-32">MSSV</th>
+                  <th className="table-th">Họ và tên</th>
+                  <th className="table-th w-40">Lớp</th>
+                  <th className="table-th w-64">Khoa</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredStudents.map((student) => (
+                  <tr key={student.studentCode} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="table-td font-semibold text-slate-800">{student.studentCode}</td>
+                    <td className="table-td font-medium text-slate-700">{student.fullName}</td>
+                    <td className="table-td text-slate-600">
+                      <span className="inline-flex bg-slate-100 px-2 py-0.5 rounded-full text-xs font-semibold text-slate-600 border border-slate-200">
+                        {student.className}
+                      </span>
+                    </td>
+                    <td className="table-td text-slate-500">{student.faculty || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
+
+// Just to avoid missing Users icon error if missing from lucide-react import
+import { Users } from 'lucide-react';

@@ -89,6 +89,10 @@ export function fetchAttendances(sessionId: string): Promise<AttendanceListData>
   return request(`/api/sessions/${encodeURIComponent(sessionId)}/attendances`);
 }
 
+export function fetchAllAttendances(): Promise<Array<Record<string, string | number>>> {
+  return request('/api/attendances');
+}
+
 export function downloadWithAuth(path: string, filename: string): void {
   void fetch(`${apiBase()}${path}`, {
     headers: getToken() ? { authorization: `Bearer ${getToken()}` } : {},
