@@ -9,6 +9,7 @@ import {
   type AttendanceListData,
   type CreatedSession,
 } from '../services/api';
+import { QrPresent } from './QrPresent';
 
 const QRCodeSVG = lazy(() => import('qrcode.react').then((m) => ({ default: m.QRCodeSVG })));
 
@@ -24,6 +25,7 @@ export function SessionsPanel() {
   const [notice, setNotice] = useState('');
   const [creating, setCreating] = useState(false);
   const [qrSession, setQrSession] = useState<CreatedSession | null>(null);
+  const [presentSession, setPresentSession] = useState<CreatedSession | null>(null);
   const [detail, setDetail] = useState<AttendanceListData | null>(null);
 
   async function reload() {
@@ -162,6 +164,9 @@ export function SessionsPanel() {
                 <button className="btn btn-accent" onClick={() => setQrSession(session)}>
                   QR
                 </button>
+                <button className="btn btn-primary" onClick={() => setPresentSession(session)}>
+                  Chiếu
+                </button>
                 <button
                   className="btn btn-ghost"
                   onClick={() => fetchAttendances(session.id).then(setDetail).catch(() => undefined)}
@@ -188,6 +193,16 @@ export function SessionsPanel() {
             ))}
           </ul>
         )}
+
+        {presentSession ? (
+          <QrPresent
+            sessionId={presentSession.id}
+            title={presentSession.title}
+            qrPayload={presentSession.qrPayload ?? `session=${presentSession.id}`}
+            endsAt={presentSession.endsAt}
+            onClose={() => setPresentSession(null)}
+          />
+        ) : null}
 
         {qrSession ? (
           <div className="qr-panel">

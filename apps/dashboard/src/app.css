@@ -165,3 +165,38 @@ table.grid tbody tr:hover { background: var(--primary-tint); }
   .brandbar { flex-direction: column; gap: 10px; align-items: flex-start; }
   table.grid th:nth-child(4), table.grid td:nth-child(4) { display: none; }
 }
+
+/* ---------- present (chieu QR len lop) ---------- */
+
+.present {
+  position: fixed; inset: 0; z-index: 50;
+  background: #fff; color: var(--ink);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 28px 20px; overflow-y: auto;
+  animation: rise-in 0.25s ease;
+}
+.present-top {
+  width: 100%; max-width: 900px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+}
+.present-kicker {
+  display: inline-block; font-size: 13px; font-weight: 700;
+  background: var(--accent-tint); color: var(--accent);
+  border-radius: 999px; padding: 3px 14px; margin-bottom: 6px;
+}
+.present-top h2 { margin: 0; font-size: clamp(22px, 4vw, 34px); }
+.present-tools { display: flex; gap: 8px; flex-shrink: 0; }
+.present-qr {
+  margin: 20px 0; padding: 20px; background: #fff;
+  border: 3px solid var(--ink); border-radius: 18px;
+}
+.present-stats { display: flex; gap: 16px; align-items: center; font-size: 18px; }
+.present-count b { color: var(--primary-deep); font-size: 26px; }
+
+@media print {
+  body { background: #fff; }
+  body * { visibility: hidden; }
+  .present, .present * { visibility: visible; }
+  .present { position: static; padding: 0; }
+  .no-print { display: none !important; }
+}
