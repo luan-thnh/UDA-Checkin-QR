@@ -9,7 +9,7 @@
     "vercel-build": "pnpm --filter @checkin/shared build",
     "test": "node --test dist-test/*.test.js",
     "pretest": "tsc -p tsconfig.test.json",
-    "predev": "tsc -p tsconfig.json",
+    "predev": "pnpm --filter @checkin/shared build && tsc -p tsconfig.json",
     "lint": "echo \"(P0) no eslint yet\""
   },
   "dependencies": {

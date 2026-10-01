@@ -1,45 +1,94 @@
 # Check-in QR — Zalo Mini App + Dashboard + API
 
-Monorepo `pnpm workspaces`:
+Điểm danh sinh viên bằng QR: admin tạo phiên trên dashboard → SV quét QR bằng Zalo → nhập MSSV → gửi kèm GPS (phải trong bán kính trường, mặc định 2km) → mỗi QR mỗi SV chỉ lưu 1 lần.
 
 ```text
-apps/api        # Backend: Hono + TypeScript (P0: memory store, P1: Postgres/Prisma)
-apps/dashboard  # Web admin: React + Vite (Next.js sau nếu cần SEO)
-apps/miniapp    # Zalo Mini App: React + ZaUI (zmp-ui) + zmp-sdk
-packages/shared # Logic dùng chung: types, haversine, validate, excel schema
+apps/api        # Backend: Node + TypeScript (local: memory/file, Vercel: Functions + Supabase)
+apps/dashboard  # Web admin: React + Vite (login, SV import/export Excel, phiên + QR + live)
+apps/miniapp    # Zalo Mini App: React + ZaUI (zmp-ui) + zmp-sdk (nhập MSSV + GPS + submit)
+packages/shared # Logic dùng chung: types, Haversine, validate MSSV, Excel/CSV
 ```
 
-## Chạy nhanh (P0-P3 xong)
+## 1. Yêu cầu
+
+- Node.js >= 20, pnpm >= 9 (`npm i -g pnpm` nếu chưa có)
+
+## 2. Cài đặt (lần đầu)
 
 ```bash
+git clone <repo-url> checkin-qr && cd checkin-qr
 pnpm install
-pnpm --filter @checkin/shared test
-pnpm --filter @checkin/api test
-pnpm --filter @checkin/api dev   # http://localhost:3001
 ```
 
-## Luồng nghiệp vụ
+## 3. Cấu hình `.env` (chạy local dùng mặc định vẫn được)
 
-1. Admin tạo `session` (môn, giờ, lat/lng trường, radius 2000m) → BE sinh QR chứa `sessionId`.
-2. SV quét QR bằng Zalo → mở Mini App `/checkin?session=xxx` → nhập MSSV + gửi GPS.
-3. BE validate: session còn hạn → SV tồn tại → khoảng cách Haversine ≤ radius → chưa điểm danh → insert 1 dòng.
-4. Quét lại cùng QR + cùng MSSV → `ALREADY_CHECKED`, không insert trùng. QR mới → được check-in tiếp.
+```bash
+cp apps/api/.env.example apps/api/.env
+cp apps/dashboard/.env.example apps/dashboard/.env
+cp apps/miniapp/.env.example apps/miniapp/.env
+```
 
-## Skills / chuẩn code
+| File | Biến quan trọng | Mặc định local |
+|---|---|---|
+| `apps/api/.env` | `PORT`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_TOKEN` | `3001` / `admin@truong.edu.vn` / `admin123` / `dev-admin-token` |
+| `apps/dashboard/.env` | `VITE_API_URL` | `http://localhost:3001` |
+| `apps/miniapp/.env` | `VITE_API_URL` | `http://localhost:3001` |
 
-Xem `AGENTS.md`. Skills đã cài toàn cục (`~/.agents/skills/`):
-`clean-code`, `vercel-react-best-practices`, `supabase-postgres-best-practices`.
+> Muốn đổi mật khẩu admin local: sửa `ADMIN_EMAIL`/`ADMIN_PASSWORD` trong `apps/api/.env` rồi restart API.
+> Chưa set `SUPABASE_URL` thì API tự chạy memory + lưu file `apps/api/data/db.json` (đủ demo local).
 
-## Roadmap
+## 4. Chạy (3 terminal)
 
-- P0 (xong): monorepo + shared + api memory + test xanh.
-- P1 (xong): API admin login + CRUD SV/phien + import JSON (dashboard parse xlsx) + export CSV + QR payload + persist `apps/api/data/db.json`. Postgres schema san ở `migrations/001_init.sql`.
-- P2 (xong): Mini App ZaUI checkin (MSSV + GPS Zalo/browser + hien khoang cach + 3 trang thai). Chay browser: `pnpm --filter @checkin/miniapp dev` (port 3002, `?session=...`). Trong Zalo: can doi token location o `POST /api/location/resolve` (can ZALO_APP_ID/SECRET).
-- P3 (xong): Dashboard login + SV import Excel/xlsx + export CSV + tao phien + QR SVG + live 5s + dong phien. Chay: `pnpm --filter @checkin/dashboard dev` (port 3000).
+```bash
+# Terminal 1 — API
+pnpm --filter @checkin/api dev
+# -> http://localhost:3001/health  (phải thấy {"ok":true})
 
-## Deploy Vercel (không cần server riêng)
+# Terminal 2 — Dashboard admin
+pnpm --filter @checkin/dashboard dev
+# -> http://localhost:3000  (login: admin@truong.edu.vn / admin123)
 
-Dùng **Supabase** (Postgres online). SQLite/file local chỉ dev, lên Vercel là mất data.
+# Terminal 3 — Mini App (giả lập trên trình duyệt)
+pnpm --filter @checkin/miniapp dev
+# -> http://localhost:3002/?session=SS-DEMO-001  (MSSV demo: SV001, SV002)
+```
+
+Lần đầu chạy hơi lâu vì tự build `packages/shared` (predev/prebuild đã lo, không cần build tay).
+
+## 5. Demo đầu-cuối (2 phút)
+
+1. Mở dashboard `http://localhost:3000`, đăng nhập.
+2. Tab **Phiên + QR** → nhập tên môn + tọa độ trường (mặc định đã là TP.HCM) + bán kính `2000` → **Tạo + sinh QR** → bấm **QR** để chiếu.
+3. Mở Mini App `http://localhost:3002/?session=<id-vừa-tạo>`, nhập MSSV `SV001`kde879, cho phép GPS trình duyệt → **Điểm danh** → thấy `SUCCESS`.
+4. Submit lại cùng MSSV → `ALREADY_CHECKED` (không ghi trùng). Kéo GPS ra xa > 2km (DevTools → Sensors) → `OUT_OF_RANGE`.
+5. Về dashboard bấm **Live** để xem danh sách, **Xuất** để tải CSV mở bằng Excel.
+6. Tab **Sinh viên** → **Import Excel** (file mẫu: header `MSSV,HoTen,Lop,Khoa,Email`).
+
+## 6. Test + kiểm tra code
+
+```bash
+pnpm --filter @checkin/shared test     # 6 test: Haversine, MSSV, radius, Excel parse
+pnpm --filter @checkin/api test        # 9 test: check-in 1 lần, ngoài 2km, đóng phiên...
+pnpm --filter @checkin/miniapp test    # 2 test: đọc sessionId từ QR, ngưỡng 2km
+pnpm --filter @checkin/dashboard test  # 2 test: map header Excel, xuất CSV
+
+# Typecheck toàn bộ (gồm cả Vercel Functions)
+./node_modules/.bin/tsc --noEmit -p apps/api/tsconfig.vercel.json
+pnpm --filter @checkin/dashboard typecheck
+pnpm --filter @checkin/miniapp typecheck
+```
+
+## 7. Build production local (kiểm tra trước khi deploy)
+
+```bash
+pnpm --filter @checkin/dashboard build   # ra apps/dashboard/dist
+pnpm --filter @checkin/miniapp build     # ra apps/miniapp/dist
+PORT=3001 node apps/api/dist/index.js     # API (local dùng bản Node, Vercel dùng api/*.ts)
+```
+
+## 8. Deploy Vercel (không cần server riêng)
+
+Dùng **Supabase** (Postgres online). SQLite/file local chỉ dev — lên Vercel là mất data.
 
 1. Tạo project free https://supabase.com → chạy `apps/api/migrations/001_init.sql` trong SQL Editor.
 2. Project Vercel **checkin-api**: Root Directory `apps/api`, Build Command `pnpm --filter @checkin/shared build`.
@@ -47,14 +96,18 @@ Dùng **Supabase** (Postgres online). SQLite/file local chỉ dev, lên Vercel l
    API chạy dạng Serverless Functions (`apps/api/api/*.ts`), logic check-in 1 lần + 2km giống hệt local.
 3. Project Vercel **checkin-dashboard**: Root Directory `apps/dashboard`.
    Env: `VITE_API_URL=https://<ten-api>.vercel.app`.
-4. Mini App: set `VITE_API_URL` về URL api Vercel rồi build, upload `apps/miniapp/dist` lên https://miniapp.zaloplatforms.com/.
+4. Mini App: set `VITE_API_URL` về URL api Vercel → `pnpm --filter @checkin/miniapp build` → upload `apps/miniapp/dist` lên https://miniapp.zaloplatforms.com/ (cần xin quyền `scope.userLocation`, xem `apps/miniapp/app-config.json`).
 
-Chi tiết biến môi trường: xem `.env.example` ở root và từng app.
+Chi tiết biến môi trường: `.env.example` ở root và từng app.
 
-## Demo full 3 đầu local (2 phút)
+## 9. Luồng nghiệp vụ
 
-```bash
-PORT=3001 node apps/api/dist/index.js &
-pnpm --filter @checkin/dashboard dev  # :3000, login admin@truong.edu.vn/admin123
-pnpm --filter @checkin/miniapp dev    # :3002/?session=SS-DEMO-001, MSSV SV001
-```
+1. Admin tạo `session` (môn, giờ, lat/lng trường, radius) → BE sinh QR chứa `sessionId`.
+2. SV quét QR bằng Zalo → mở Mini App `/checkin?session=xxx` → nhập MSSV + gửi GPS.
+3. BE validate: session còn hạn → SV tồn tại → khoảng cách Haversine ≤ radius → chưa điểm danh → insert 1 dòng.
+4. Quét lại cùng QR + cùng MSSV → `ALREADY_CHECKED`, không insert trùng. QR mới → được check-in tiếp.
+
+## 10. Chuẩn code
+
+Xem `AGENTS.md`. Skills đã cài (`~/.agents/skills/`):
+`clean-code`, `vercel-react-best-practices`, `supabase-postgres-best-practices`.

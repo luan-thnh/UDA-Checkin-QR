@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 3000",
+    "predev": "pnpm --filter @checkin/shared build",
     "build": "tsc --noEmit && vite build",
     "prebuild": "pnpm --filter @checkin/shared build",
     "typecheck": "tsc --noEmit",
