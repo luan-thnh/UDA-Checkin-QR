@@ -1,5 +1,11 @@
 export { haversineMeters, isWithinRadius } from './distance.js';
 export {
+  parseStudentRows,
+  studentsToCsv,
+  type RawStudentRow,
+  type ImportStudentsResult,
+} from './excel.js';
+export {
   normalizeStudentCode,
   isValidStudentCode,
   isValidCoordinate,

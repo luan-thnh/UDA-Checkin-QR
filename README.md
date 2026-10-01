@@ -32,7 +32,7 @@ Xem `AGENTS.md`. Skills đã cài toàn cục (`~/.agents/skills/`):
 
 ## Roadmap
 
-- P0 (hiện tại): monorepo + shared + api memory + test xanh.
-- P1: Postgres + Prisma + import/export Excel + auth admin.
+- P0 (xong): monorepo + shared + api memory + test xanh.
+- P1 (xong): API admin login + CRUD SV/phien + import JSON (dashboard parse xlsx) + export CSV + QR payload + persist `apps/api/data/db.json`. Postgres schema san ở `migrations/001_init.sql`.
 - P2: Mini App ZaUI + zmp-sdk getLocation.
 - P3: Dashboard + QR render + live list.

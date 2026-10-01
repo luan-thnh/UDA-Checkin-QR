@@ -1,0 +1,55 @@
+{
+  "students": [
+    {
+      "studentCode": "SV001",
+      "fullName": "Nguyen Van A",
+      "className": "CTK45",
+      "faculty": "CNTT"
+    },
+    {
+      "studentCode": "SV002",
+      "fullName": "Tran Thi B",
+      "className": "CTK45",
+      "faculty": "CNTT"
+    },
+    {
+      "studentCode": "SV100",
+      "fullName": "Test A",
+      "className": "CTK46"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "SS-DEMO-001",
+      "title": "Lap trinh Web - Tuan 1",
+      "subject": "LT Web",
+      "latCenter": 10.762622,
+      "lngCenter": 106.660172,
+      "radiusM": 2000,
+      "startsAt": "2026-10-01T01:49:20.063Z",
+      "endsAt": "2026-10-01T04:49:20.063Z",
+      "status": "active"
+    },
+    {
+      "id": "SS-MUOXR4BU",
+      "title": "Demo P1",
+      "latCenter": 10.762622,
+      "lngCenter": 106.660172,
+      "radiusM": 2000,
+      "startsAt": "2026-10-01T00:00:00.000Z",
+      "endsAt": "2026-10-02T00:00:00.000Z",
+      "status": "active"
+    }
+  ],
+  "attendances": [
+    {
+      "id": "AT-1790822961097-SV100",
+      "sessionId": "SS-MUOXR4BU",
+      "studentCode": "SV100",
+      "checkedAt": "2026-10-01T02:49:21.097Z",
+      "distanceM": 0,
+      "lat": 10.762622,
+      "lng": 106.660172
+    }
+  ]
+}
