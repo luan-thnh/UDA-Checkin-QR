@@ -11,7 +11,7 @@ export default async function handler(req: VercelReq, res: VercelRes) {
   if (!supabase) return;
   if (!requireAdmin(req, res)) return;
   const { data } = await supabase.from('students').select('*').order('student_code');
-  const rows = (data ?? []).map((row) => ({
+  const rows = (data ?? []).map((row: any) => ({
     studentCode: row.student_code,
     fullName: row.full_name,
     className: row.class_name,
