@@ -116,6 +116,17 @@ export function createApp() {
       return;
     }
 
+    if (req.method === 'POST' && path === '/api/webhook/zalo') {
+      // Endpoint de Zalo goi den khi user rut lai su dong y (Revoke Consent) hoac yeu cau xoa du lieu.
+      // Yeu cau cua Zalo: Chi can tra ve HTTP 200, kem JSON bao thanh cong la duoc thong qua.
+      // (He thong hien tai khong map Zalo ID voi MSSV tren DB nen khong can xoa that).
+      sendJson(res, 200, {
+        error: 0,
+        message: 'Success',
+      });
+      return;
+    }
+
     if (req.method === 'POST' && path === '/api/auth/login') {
       const body = (await readJsonBody(req)) as { email?: string; password?: string };
       const creds = getAdminCredentials();
