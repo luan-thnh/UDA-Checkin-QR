@@ -9,7 +9,7 @@ apps/miniapp    # Zalo Mini App: React + ZaUI (zmp-ui) + zmp-sdk
 packages/shared # Logic dùng chung: types, haversine, validate, excel schema
 ```
 
-## Chạy nhanh (P0)
+## Chạy nhanh (P0-P3 xong)
 
 ```bash
 pnpm install
@@ -35,4 +35,12 @@ Xem `AGENTS.md`. Skills đã cài toàn cục (`~/.agents/skills/`):
 - P0 (xong): monorepo + shared + api memory + test xanh.
 - P1 (xong): API admin login + CRUD SV/phien + import JSON (dashboard parse xlsx) + export CSV + QR payload + persist `apps/api/data/db.json`. Postgres schema san ở `migrations/001_init.sql`.
 - P2 (xong): Mini App ZaUI checkin (MSSV + GPS Zalo/browser + hien khoang cach + 3 trang thai). Chay browser: `pnpm --filter @checkin/miniapp dev` (port 3002, `?session=...`). Trong Zalo: can doi token location o `POST /api/location/resolve` (can ZALO_APP_ID/SECRET).
-- P3: Dashboard + QR render + live list.
+- P3 (xong): Dashboard login + SV import Excel/xlsx + export CSV + tao phien + QR SVG + live 5s + dong phien. Chay: `pnpm --filter @checkin/dashboard dev` (port 3000).
+
+## Demo full 3 đầu (2 phút)
+
+```bash
+PORT=3001 node apps/api/dist/index.js &
+pnpm --filter @checkin/dashboard dev  # :3000, login admin@truong.edu.vn/admin123
+pnpm --filter @checkin/miniapp dev    # :3002/?session=SS-DEMO-001, MSSV SV001
+```

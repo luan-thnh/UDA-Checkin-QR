@@ -7,16 +7,21 @@
     "dev": "vite --port 3000",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"(P3) dashboard test chua co\"",
+    "test": "node --test dist-test/*.test.js",
+    "pretest": "tsc -p tsconfig.test.json",
     "lint": "echo \"(P0) no eslint yet\""
   },
   "dependencies": {
+    "@checkin/shared": "workspace:*",
+    "qrcode.react": "^4.1.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.3",
     "typescript": "^5.6.3",
     "vite": "^5.4.8"
   }
