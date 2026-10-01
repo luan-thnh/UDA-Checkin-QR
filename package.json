@@ -1,0 +1,25 @@
+{
+  "name": "checkin-qr",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.23.0",
+  "description": "Zalo Mini App check-in sinh vien + Dashboard quan ly + API",
+  "scripts": {
+    "dev:api": "pnpm --filter @checkin/api dev",
+    "dev:dashboard": "pnpm --filter @checkin/dashboard dev",
+    "dev:miniapp": "pnpm --filter @checkin/miniapp dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

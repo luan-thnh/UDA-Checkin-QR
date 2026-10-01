@@ -1,0 +1,20 @@
+{
+  "name": "@checkin/miniapp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"Chay bang Zalo Mini App DevTools (zmp start). Xem README.\"",
+    "build": "echo \"(P2) zmp build\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"(P2) miniapp test chua co\"",
+    "lint": "echo \"(P0) no eslint yet\""
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

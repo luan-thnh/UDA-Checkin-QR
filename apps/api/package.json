@@ -1,0 +1,20 @@
+{
+  "name": "@checkin/api",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --test dist-test/*.test.js",
+    "pretest": "tsc -p tsconfig.test.json",
+    "predev": "tsc -p tsconfig.json",
+    "lint": "echo \"(P0) no eslint yet\""
+  },
+  "dependencies": {
+    "@checkin/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
