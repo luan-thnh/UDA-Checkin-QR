@@ -12,7 +12,7 @@ async function readJson<T>(res: Response): Promise<T> {
 }
 
 export async function getSessionPublic(sessionId: string): Promise<CheckinSession> {
-  const res = await fetch(`${apiBase()}/api/sessions/${encodeURIComponent(sessionId)}/public`);
+  const res = await fetch(`${apiBase()}/api/sessions/${encodeURIComponent(sessionId)}?action=public`);
   const body = await readJson<ApiResponse<CheckinSession>>(res);
   if (!res.ok) throw new Error(body.message || 'Không tải được phiên điểm danh.');
   return body.data;

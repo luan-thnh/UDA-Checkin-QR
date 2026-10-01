@@ -146,7 +146,7 @@ export function StudentsPanel() {
               <Upload size={16} className="mr-2" /> Import Excel
               <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={(e) => void handleFile(e.target.files?.[0])} />
             </label>
-            <button className="btn btn-outline" onClick={() => downloadWithAuth('/api/students/export', 'danh-sach-sinh-vien.csv')}>
+            <button className="btn btn-outline" onClick={() => downloadWithAuth('/api/students?action=export', 'danh-sach-sinh-vien.csv')}>
               <Download size={16} className="mr-2" /> Xuất Excel
             </button>
           </div>
