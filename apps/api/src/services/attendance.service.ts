@@ -132,7 +132,7 @@ export async function listAllAttendances(): Promise<any[]> {
       )
     `);
   if (error || !data) return [];
-  return data.map(row => ({
+  return data.map((row: any) => ({
     id: row.id,
     sessionId: row.session_id,
     studentCode: row.student_code,
@@ -161,7 +161,7 @@ export async function getSessionAttendances(sessionId: string): Promise<any[]> {
     .eq('session_id', sessionId);
   
   if (error || !data) return [];
-  return data.map(row => ({
+  return data.map((row: any) => ({
     id: row.id,
     sessionId: row.session_id,
     studentCode: row.student_code,

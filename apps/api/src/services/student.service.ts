@@ -15,7 +15,7 @@ export async function listStudents(query: string): Promise<Student[]> {
   const { data, error } = await req;
   if (error) throw new Error(`Loi tai danh sach sinh vien: ${error.message}`);
   
-  return (data || []).map(row => ({
+  return (data || []).map((row: any) => ({
     studentCode: row.student_code,
     fullName: row.full_name,
     className: row.class_name,

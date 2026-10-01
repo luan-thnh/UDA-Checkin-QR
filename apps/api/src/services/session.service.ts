@@ -66,7 +66,7 @@ export async function listSessions(): Promise<CheckinSession[]> {
 
   if (error) throw new Error(`Loi tai danh sach phien: ${error.message}`);
   
-  return (data || []).map(row => ({
+  return (data || []).map((row: any) => ({
     id: row.id,
     title: row.title,
     subject: row.subject,

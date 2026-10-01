@@ -180,7 +180,7 @@ export function createApp() {
     if (req.method === 'GET' && path === '/api/sessions') {
       if (!requireAuth(req, res)) return;
       const miniAppId = process.env.MINI_APP_ID ?? 'MINI_APP_ID';
-      const sessions = (await listSessions()).map(session => ({
+      const sessions = (await listSessions()).map((session: any) => ({
         ...session,
         qrPayload: buildSessionDeepLink(miniAppId, session.id),
       }));
