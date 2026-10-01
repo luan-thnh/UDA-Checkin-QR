@@ -249,19 +249,22 @@ export function createApp() {
         }
         if (req.method === 'POST' && path === '/api/location/resolve') {
             const body = (await readJsonBody(req));
-            if (!body.token) {
+            try {
+                const { resolveZaloLocationToken, getZaloAppSecret } = await import('./services/zalo-location.service.js');
+                const coords = await resolveZaloLocationToken({
+                    locationToken: body.token ?? '',
+                    userAccessToken: body.accessToken ?? '',
+                    appSecret: getZaloAppSecret(),
+                });
+                sendJson(res, 200, { code: 'SUCCESS', message: 'OK', data: coords });
+            }
+            catch (error) {
                 sendJson(res, 400, {
                     code: 'INVALID_INPUT',
-                    message: 'Thieu Zalo location token. Hay dung GPS trinh duyet.',
+                    message: error instanceof Error ? error.message : 'Khong doi duoc token vi tri.',
                     data: null,
                 });
-                return;
             }
-            sendJson(res, 501, {
-                code: 'INVALID_INPUT',
-                message: 'Chua cau hinh ZALO_APP_ID/SECRET de doi token. Can backend goi Zalo OpenAPI.',
-                data: null,
-            });
             return;
         }
         if (req.method === 'POST' && path === '/api/attend') {

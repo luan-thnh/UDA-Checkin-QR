@@ -21,7 +21,7 @@ Quét lại / submit lại cùng MSSV → `ALREADY_CHECKED`.
 ## Trong Zalo thật
 
 1. Tạo app tại https://miniapp.zaloplatforms.com/, xin quyền `scope.userLocation`, điền AppID vào `app-config.json` + `MINI_APP_ID` ở API để sinh QR.
-2. `getLocation` của Zalo trả về **token**, không trả lat/lng trực tiếp. Mini App gửi token về `POST /api/location/resolve`, backend đổi token qua Zalo OpenAPI (cần `ZALO_APP_ID/SECRET`) rồi mới trả lat/lng. P2 hiện trả 501 rõ ràng + tự fallback GPS browser khi dev.
+2. `getLocation` của Zalo trả về **token**, không trả lat/lng trực tiếp. Mini App lấy thêm `getAccessToken()`, gửi cả 2 về `POST /api/location/resolve`; backend gọi `graph.zalo.me/v2.0/me/info` (headers `access_token` + `code` + `secret_key` = `ZALO_APP_SECRET` trong `apps/api/.env`) rồi trả lat/lng. Chưa set secret thì API báo lỗi rõ ràng + Mini App tự fallback GPS browser khi dev.
 3. Upload `apps/miniapp/dist` lên portal Zalo để duyệt (UI 100% ZaUI: Page/Header/Box/Input/Button/Spinner).
 
 ## Files

@@ -28,11 +28,14 @@ export async function submitAttend(
   return readJson<ApiResponse<AttendSuccessData>>(res);
 }
 
-export async function resolveZaloLocationToken(token: string): Promise<{ lat: number; lng: number }> {
+export async function resolveZaloLocationToken(
+  token: string,
+  accessToken?: string,
+): Promise<{ lat: number; lng: number }> {
   const res = await fetch(`${apiBase()}/api/location/resolve`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ token, accessToken: accessToken ?? '' }),
   });
   const body = await readJson<ApiResponse<{ lat: number; lng: number }>>(res);
   if (!res.ok) throw new Error(body.message || 'Không đổi được token vị trí Zalo.');

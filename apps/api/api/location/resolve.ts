@@ -1,23 +1,25 @@
-import { handleCors, readBody, type VercelReq, type VercelRes} from '../../src/vercel/handler.js';
+import { getZaloAppSecret, resolveZaloLocationToken } from '../../src/services/zalo-location.service.js';
+import { handleCors, readBody, type VercelReq, type VercelRes } from '../../src/vercel/handler.js';
 
-export default function handler(req: VercelReq, res: VercelRes) {
+export default async function handler(req: VercelReq, res: VercelRes) {
   if (handleCors(req, res)) return;
   if (req.method !== 'POST') {
     res.status(405).json({ code: 'INVALID_INPUT', message: 'Method not allowed.', data: null });
     return;
   }
-  const body = readBody<{ token?: string }>(req);
-  if (!body.token) {
+  const body = readBody<{ token?: string; accessToken?: string }>(req);
+  try {
+    const coords = await resolveZaloLocationToken({
+      locationToken: body.token ?? '',
+      userAccessToken: body.accessToken ?? '',
+      appSecret: getZaloAppSecret(),
+    });
+    res.status(200).json({ code: 'SUCCESS', message: 'OK', data: coords });
+  } catch (error) {
     res.status(400).json({
       code: 'INVALID_INPUT',
-      message: 'Thieu Zalo location token. Hay dung GPS trinh duyet.',
+      message: error instanceof Error ? error.message : 'Khong doi duoc token vi tri.',
       data: null,
     });
-    return;
   }
-  res.status(501).json({
-    code: 'INVALID_INPUT',
-    message: 'Chua cau hinh ZALO_APP_ID/SECRET de doi token. Can backend goi Zalo OpenAPI.',
-    data: null,
-  });
 }

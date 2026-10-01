@@ -41,7 +41,13 @@ async function getZaloFix(): Promise<GpsFix | null> {
   const location = await sdk.getLocation({});
   const token = (location as { token?: string }).token ?? '';
   if (!token) return null;
-  const coords = await resolveZaloLocationToken(token);
+  let accessToken = '';
+  try {
+    accessToken = await sdk.getAccessToken({});
+  } catch {
+    accessToken = '';
+  }
+  const coords = await resolveZaloLocationToken(token, accessToken);
   return { ...coords, source: 'zalo' };
 }
 
