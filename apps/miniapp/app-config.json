@@ -1,0 +1,4 @@
+{
+  "app": { "name": "Check-in sinh viên", "id": "MINI_APP_ID" },
+  "permissions": ["scope.userLocation"]
+}

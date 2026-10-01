@@ -34,5 +34,5 @@ Xem `AGENTS.md`. Skills đã cài toàn cục (`~/.agents/skills/`):
 
 - P0 (xong): monorepo + shared + api memory + test xanh.
 - P1 (xong): API admin login + CRUD SV/phien + import JSON (dashboard parse xlsx) + export CSV + QR payload + persist `apps/api/data/db.json`. Postgres schema san ở `migrations/001_init.sql`.
-- P2: Mini App ZaUI + zmp-sdk getLocation.
+- P2 (xong): Mini App ZaUI checkin (MSSV + GPS Zalo/browser + hien khoang cach + 3 trang thai). Chay browser: `pnpm --filter @checkin/miniapp dev` (port 3002, `?session=...`). Trong Zalo: can doi token location o `POST /api/location/resolve` (can ZALO_APP_ID/SECRET).
 - P3: Dashboard + QR render + live list.

@@ -257,8 +257,25 @@ export function createApp() {
       return;
     }
 
-    if (req.method === 'POST' && path === '/api/attend') {
-      try {
+    if (req.method === 'POST' && path === '/api/location/resolve') {
+      const body = (await readJsonBody(req)) as { token?: string };
+      if (!body.token) {
+        sendJson(res, 400, {
+          code: 'INVALID_INPUT',
+          message: 'Thieu Zalo location token. Hay dung GPS trinh duyet.',
+          data: null,
+        });
+        return;
+      }
+      sendJson(res, 501, {
+        code: 'INVALID_INPUT',
+        message: 'Chua cau hinh ZALO_APP_ID/SECRET de doi token. Can backend goi Zalo OpenAPI.',
+        data: null,
+      });
+      return;
+    }
+
+    if (req.method === 'POST' && path === '/api/attend') {      try {
         const body = (await readJsonBody(req)) as {
           sessionId?: string;
           studentCode?: string;
