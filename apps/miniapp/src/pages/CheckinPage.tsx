@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Button, Header, Input, Page, Spinner, Icon, useNavigate } from 'zmp-ui';
 import api from 'zmp-sdk';
+import { Box, Button, Header, Input, Page, Spinner, Icon, useNavigate } from 'zmp-ui';
 import {
-  haversineMeters,
   parseSessionIdFromQuery,
   validateAttendForm,
   type ApiResponse,
@@ -14,21 +13,16 @@ import { useCheckinLocation } from '../hooks/useCheckinLocation';
 import { StatusCard } from '../components/StatusCard';
 
 function readSessionId(): string {
-  // 1. Try Zalo SDK getRouteParams
   try {
     const routeParams = api.getRouteParams();
     if (routeParams && routeParams.session) {
       return parseSessionIdFromQuery({ session: routeParams.session });
     }
-  } catch (e) {
-    // Ignore if api is not ready
-  }
+  } catch (e) {}
 
-  // 2. Try window.location.search (Standard URL)
   let params = new URLSearchParams(window.location.search);
   let sessionParam = params.get('session');
 
-  // 3. Try window.location.hash (Hash router with query, e.g., #/?session=123)
   if (!sessionParam && window.location.hash.includes('?')) {
     const hashQuery = window.location.hash.split('?')[1];
     params = new URLSearchParams(hashQuery);
@@ -51,16 +45,17 @@ export function CheckinPage() {
 
   const [alreadyCheckedInLocal, setAlreadyCheckedInLocal] = useState(false);
   const { fix, status, errorMessage, requestLocation } = useCheckinLocation();
+  
+  const [manualSessionCode, setManualSessionCode] = useState('');
 
   useEffect(() => {
     if (!sessionId) {
-      setSessionError('Vui lòng quét mã QR do Giảng viên cung cấp để điểm danh.');
+      setSessionError('Vui lòng quét mã QR hoặc nhập mã phiên do Giảng viên cung cấp.');
       return;
     }
     
     setSessionError(''); // Clear old error
 
-    // Kiem tra lich su checkin o local
     if (localStorage.getItem(`checkin_${sessionId}`)) {
       setAlreadyCheckedInLocal(true);
     }
@@ -76,21 +71,20 @@ export function CheckinPage() {
 
   const distanceM = useMemo(() => {
     if (!fix || !session) return null;
-    return Math.round(haversineMeters(fix.lat, fix.lng, session.latCenter, session.lngCenter));
+    const dx = fix.lat - session.latCenter;
+    const dy = fix.lng - session.lngCenter;
+    return Math.sqrt(dx * dx + dy * dy) * 111320;
   }, [fix, session]);
 
-  const inRange = distanceM !== null && session !== null && distanceM <= session.radiusM;
+  const blockReason = useMemo(() => {
+    if (!session) return 'Đang tải...';
+    if (session.status !== 'active') return 'Phiên đã đóng';
+    if (status === 'error') return 'Chưa cấp quyền vị trí';
+    if (!fix) return 'Đang lấy vị trí...';
+    if (distanceM !== null && distanceM > session.radiusM) return `Quá xa (${Math.round(distanceM)}m > ${session.radiusM}m)`;
+    return null;
+  }, [session, status, fix, distanceM]);
 
-  function submitReason(): string {
-    if (!session || sessionError) return 'Chưa tải được phiên điểm danh.';
-    if (!studentCode.trim()) return 'Nhập MSSV trước khi điểm danh.';
-    if (formError) return formError;
-    if (status === 'loading') return 'Đang chờ GPS…';
-    if (!fix) return 'Chưa có vị trí. Bấm “Lấy lại vị trí”.';
-    return '';
-  }
-
-  const blockReason = submitReason();
   const canSubmit = !blockReason && !submitting;
 
   function handleCodeChange(value: string) {
@@ -108,37 +102,47 @@ export function CheckinPage() {
     if (!fix || !session) return;
     setSubmitting(true);
     setResult(null);
+
     try {
-      const response = await submitAttend({
+      const res = await submitAttend({
         sessionId: session.id,
-        studentCode: studentCode.trim(),
+        studentCode,
         lat: fix.lat,
         lng: fix.lng,
-        accuracyM: fix.accuracyM,
       });
-      setResult(response);
-      
-      if (response.code === 'SUCCESS' || response.code === 'ALREADY_CHECKED') {
-        localStorage.setItem(`checkin_${session.id}`, studentCode.trim());
-        localStorage.setItem('lastStudentCode', studentCode.trim());
+      setResult(res);
+      if (res.code === 'SUCCESS' || res.code === 'ALREADY_CHECKED') {
+        localStorage.setItem(`checkin_${session.id}`, studentCode);
+        localStorage.setItem('lastStudentCode', studentCode);
+        setAlreadyCheckedInLocal(true);
       }
-    } catch {
-      setResult({ code: 'INVALID_INPUT', message: 'Không gọi được server. Kiểm tra mạng.', data: null as never });
+    } catch (e: any) {
+      setResult({ code: 'INVALID_INPUT', message: e.message, data: null as any });
     } finally {
       setSubmitting(false);
     }
   }
 
+  function handleBack() {
+    if (window.history.length <= 1) {
+      api.closeApp({});
+    } else {
+      navigate(-1);
+    }
+  }
+
   if (!sessionId) {
     return (
-      <Page>
-        <Header title="Điểm danh UDA" showBackIcon={false} />
-        <div className="ci-wrap empty-state text-center flex flex-col items-center justify-center h-full pt-20">
-          <div className="icon-wrapper mb-4">
-            <Icon icon="zi-qrline" size={64} style={{ color: 'var(--primary)' }} />
+      <Page className="page">
+        <Header title="Điểm danh UDA" onBackClick={handleBack} />
+        <div className="section-container" style={{ textAlign: 'center', marginTop: 40 }}>
+          <div className="icon-wrapper" style={{ margin: '0 auto 24px' }}>
+            <Icon icon="zi-qrline" size={48} style={{ color: 'var(--primary)' }} />
           </div>
-          <h2 className="mb-2">Chưa có mã phiên</h2>
-          <p className="mb-6">{sessionError}</p>
+          <h2 style={{ marginBottom: 12 }}>Bắt đầu điểm danh</h2>
+          <p style={{ color: 'var(--muted)', marginBottom: 32, fontSize: 15 }}>
+            Quét mã QR từ màn hình của Giảng viên để tiếp tục.
+          </p>
           <Button
             className="btn-submit"
             onClick={() => {
@@ -168,29 +172,52 @@ export function CheckinPage() {
                     }
                   },
                   fail: (error) => {
-                    console.error('Scan fail:', error);
-                    alert('Lỗi quét QR (Có thể do bạn đang dùng bản Web/PC). Chi tiết: ' + JSON.stringify(error));
-                  }
+                    alert('Lỗi quét QR: ' + JSON.stringify(error));
+                  },
                 });
-              } catch (error) {
-                console.error('Scan catch:', error);
-                alert('Không thể gọi API quét QR: ' + JSON.stringify(error));
+              } catch (e) {
+                alert('Không thể mở Camera.');
               }
             }}
           >
             Quét mã QR ngay
           </Button>
+          
+          <div style={{ marginTop: 40, borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+            <p style={{ color: 'var(--muted)', marginBottom: 16, fontSize: 14 }}>Hoặc nhập mã phiên bằng tay:</p>
+            <Input
+              type="text"
+              placeholder="VD: SS-MUP6ILIE"
+              value={manualSessionCode}
+              onChange={(e) => setManualSessionCode(e.target.value.toUpperCase())}
+              clearable
+              style={{ marginBottom: 16 }}
+            />
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => {
+                if (manualSessionCode.trim()) {
+                  const code = manualSessionCode.trim().toUpperCase();
+                  setSessionId(code);
+                  navigate(`/?session=${encodeURIComponent(code)}`, { replace: true });
+                }
+              }}
+            >
+              Vào điểm danh
+            </Button>
+          </div>
         </div>
       </Page>
     );
   }
 
   return (
-    <Page>
-      <Header title="Điểm danh sinh viên" />
-      <div className="ci-wrap">
+    <Page className="page">
+      <Header title="Điểm danh sinh viên" onBackClick={handleBack} />
+      <Box className="section-container" style={{ marginTop: 16 }}>
         {!session && !sessionError ? (
-          <div className="loading-state">
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted)' }}>
             <Spinner visible />
             <p>Đang tải thông tin phiên...</p>
           </div>
@@ -203,6 +230,7 @@ export function CheckinPage() {
             </div>
             <h3>Lỗi tải dữ liệu</h3>
             <p style={{ wordBreak: 'break-word' }}>{sessionError}</p>
+            <Button size="small" variant="secondary" onClick={() => { setSessionId(''); navigate('/', { replace: true }); }} style={{ marginTop: 16 }}>Thử mã khác</Button>
           </div>
         ) : null}
 
@@ -211,111 +239,84 @@ export function CheckinPage() {
             <div className="ci-session-bg"></div>
             <div className="ci-session-content">
               <h2>{session.title}</h2>
-              {session.subject && <p className="subject">{session.subject}</p>}
-              <div className="time-info">
-                <Icon icon="zi-clock-1" size={16} />
-                <span>
-                  {new Date(session.startsAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} - {new Date(session.endsAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}
-                </span>
+              <div className="ci-session-meta">
+                <Icon icon="zi-bookmark" size={16} /> <span>{session.subject}</span>
               </div>
-              <p className="radius-info">Bán kính cho phép: <b>{session.radiusM}m</b></p>
-              <span className={`pill ${session.status === 'active' ? 'active' : 'closed'}`}>
-                {session.status === 'active' ? 'Đang mở' : 'Đã đóng'}
-              </span>
+              <div className="ci-session-meta">
+                <Icon icon="zi-clock-1" size={16} /> 
+                <span>Đến {new Date(session.endsAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
             </div>
           </div>
         ) : null}
+      </Box>
 
-        {alreadyCheckedInLocal && session ? (
-          <div className="ci-result success mt-4">
+      {session ? (
+        <Box className="section-container ci-card ci-form-container">
+          <div className="ci-gps-status">
             <div className="icon-wrapper-small">
-              <Icon icon="zi-check-circle-solid" size={32} style={{ color: 'var(--primary-deep)' }} />
+              <Icon icon="zi-location-solid" size={20} />
             </div>
-            <h3>Đã điểm danh thành công</h3>
-            <p>Bạn đã điểm danh cho phiên này với MSSV <b>{localStorage.getItem(`checkin_${session.id}`)}</b>.</p>
+            <div style={{ flex: 1 }}>
+              <div className="label">Vị trí của bạn</div>
+              <div className="value">
+                {status === 'ok' && fix
+                  ? distanceM !== null
+                    ? `Cách điểm danh ${Math.round(distanceM)}m`
+                    : 'Đang tính toán...'
+                  : status === 'error'
+                  ? 'Bị từ chối (Chưa cấp quyền)'
+                  : errorMessage || 'Đang chờ vị trí...'}
+              </div>
+            </div>
+            {status !== 'ok' ? (
+              <Button size="small" onClick={requestLocation} variant="secondary">Cấp quyền</Button>
+            ) : null}
           </div>
-        ) : null}
 
-        {!alreadyCheckedInLocal && session && !result?.data ? (
-          <>
-            <div className="ci-card">
-              <h4>Thông tin sinh viên</h4>
-              <Input 
-                placeholder="Nhập MSSV (VD: SV001)" 
-                value={studentCode} 
-                onChange={(e) => handleCodeChange(e.target.value)} 
-                status={formError ? 'error' : 'success'}
-                errorText={formError}
-                clearable
+          {result ? (
+            <div style={{ marginTop: 24 }}>
+              <StatusCard 
+                code={result.code} 
+                message={result.message} 
+                checkedAt={result.data?.attendance?.checkedAt}
               />
             </div>
-
-            <div className="ci-card">
-              <div className="card-header">
-                <h4>Vị trí của bạn</h4>
-                <Button variant="tertiary" size="small" icon={<Icon icon="zi-location" />} onClick={requestLocation}>
-                  Làm mới
-                </Button>
-              </div>
-              
-              {status === 'loading' ? (
-                <div className="location-status loading">
-                  <Spinner visible /> <span className="ml-2">Đang định vị...</span>
-                </div>
-              ) : null}
-              
-              {status === 'error' ? (
-                <div className="ci-error flex-center">
-                  <Icon icon="zi-warning-solid" size={18} /> {errorMessage}
-                </div>
-              ) : null}
-              
-              {fix && distanceM !== null ? (
-                <div className={`ci-gps ${inRange ? 'ok' : 'far'}`}>
-                  <div className="distance-badge">
-                    {distanceM}m
+          ) : (
+            <div style={{ marginTop: 24 }}>
+              {alreadyCheckedInLocal ? (
+                <StatusCard code="ALREADY_CHECKED" message="Bạn đã check-in thành công trên thiết bị này." />
+              ) : (
+                <>
+                  <div className="ci-input-group">
+                    <label>Mã số sinh viên (MSSV)</label>
+                    <Input
+                      type="text"
+                      placeholder="Nhập MSSV của bạn (vd: 205053120)"
+                      value={studentCode}
+                      onChange={(e) => handleCodeChange(e.target.value)}
+                      errorText={formError}
+                      status={formError ? 'error' : ''}
+                      clearable
+                      disabled={submitting}
+                    />
                   </div>
-                  <div className="distance-text">
-                    Cách trường ({fix.source === 'zalo' ? 'Zalo' : 'Web'})<br/>
-                    <strong className={inRange ? 'text-green' : 'text-red'}>
-                      {inRange ? 'Trong phạm vi' : 'Ngoài phạm vi'}
-                    </strong>
-                  </div>
-                </div>
-              ) : null}
-              
-              {fix?.accuracyM && fix.accuracyM > 200 ? (
-                <div className="ci-hint warning">
-                  <Icon icon="zi-info-circle" size={14} /> GPS yếu (±{Math.round(fix.accuracyM)}m). Hãy ra không gian thoáng.
-                </div>
-              ) : null}
+                  
+                  <Button
+                    className="btn-submit"
+                    fullWidth
+                    loading={submitting}
+                    disabled={!canSubmit || !studentCode.trim()}
+                    onClick={handleSubmit}
+                  >
+                    {blockReason || 'Xác nhận điểm danh'}
+                  </Button>
+                </>
+              )}
             </div>
-
-            <div className="action-area">
-              {!canSubmit && !submitting ? <div className="ci-hint text-center mb-2">{blockReason}</div> : null}
-              <Button 
-                fullWidth 
-                disabled={!canSubmit} 
-                loading={submitting} 
-                onClick={handleSubmit}
-                className="btn-submit"
-              >
-                Xác nhận điểm danh
-              </Button>
-            </div>
-          </>
-        ) : null}
-
-        {result ? (
-          <Box mt={4}>
-            <StatusCard
-              code={result.code}
-              message={result.message}
-              checkedAt={result.data?.attendance.checkedAt}
-            />
-          </Box>
-        ) : null}
-      </div>
+          )}
+        </Box>
+      ) : null}
     </Page>
   );
 }
