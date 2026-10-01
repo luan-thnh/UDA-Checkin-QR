@@ -66,6 +66,7 @@ export interface CreatedSession extends CheckinSession {
 export function createSession(input: {
   title: string;
   subject?: string;
+  className?: string;
   latCenter: number;
   lngCenter: number;
   radiusM: number;

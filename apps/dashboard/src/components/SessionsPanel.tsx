@@ -1,11 +1,12 @@
 import { Suspense, useEffect, useState, useMemo } from 'react';
-import type { CheckinSession } from '@checkin/shared';
+import type { CheckinSession, Student } from '@checkin/shared';
 import { QRCodeSVG } from 'qrcode.react';
-import { closeSession, createSession, downloadWithAuth, fetchAttendances, fetchSessions, type AttendanceListData, type CreatedSession } from '../services/api';
-import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2 } from 'lucide-react';
+import { closeSession, createSession, downloadWithAuth, fetchAttendances, fetchSessions, fetchStudents, type AttendanceListData, type CreatedSession } from '../services/api';
+import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users } from 'lucide-react';
 
 export function SessionsPanel() {
   const [sessions, setSessions] = useState<CheckinSession[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -13,6 +14,7 @@ export function SessionsPanel() {
   // Form states
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
+  const [className, setClassName] = useState('');
   const [lat, setLat] = useState('16.0319'); // Default UDA
   const [lng, setLng] = useState('108.2205');
   const [radius, setRadius] = useState('2000');
@@ -26,7 +28,9 @@ export function SessionsPanel() {
   async function reload() {
     setLoading(true);
     try {
-      setSessions(await fetchSessions());
+      const [ssData, stData] = await Promise.all([fetchSessions(), fetchStudents('')]);
+      setSessions(ssData);
+      setStudents(stData);
       setError('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Lỗi tải danh sách phiên.');
@@ -39,6 +43,11 @@ export function SessionsPanel() {
     void reload();
   }, []);
 
+  const uniqueClasses = useMemo(() => {
+    const cls = new Set(students.map(s => s.className).filter(Boolean));
+    return Array.from(cls).sort();
+  }, [students]);
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -47,6 +56,7 @@ export function SessionsPanel() {
       const res = await createSession({
         title,
         subject,
+        className,
         latCenter: Number(lat),
         lngCenter: Number(lng),
         radiusM: Number(radius),
@@ -56,6 +66,7 @@ export function SessionsPanel() {
       setQrSession(res);
       setTitle('');
       setSubject('');
+      setClassName('');
       setIsCreating(false);
       void reload();
     } catch (e) {
@@ -69,6 +80,7 @@ export function SessionsPanel() {
     return sessions.filter(s => 
       s.title.toLowerCase().includes(q) || 
       (s.subject && s.subject.toLowerCase().includes(q)) || 
+      (s.className && s.className.toLowerCase().includes(q)) || 
       s.id.toLowerCase().includes(q)
     );
   }, [sessions, query]);
@@ -89,11 +101,18 @@ export function SessionsPanel() {
         <div className="card p-6 border-primary/20 bg-primary-light/10">
           <h3 className="text-lg font-semibold mb-4 text-slate-800">Tạo phiên điểm danh mới</h3>
           <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-3">
               <label className="label">Tên phiên / Mô tả</label>
               <input required className="input" placeholder="VD: Điểm danh tuần 1" value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <div>
+              <label className="label">Lớp học</label>
+              <select className="input bg-white appearance-none" value={className} onChange={(e) => setClassName(e.target.value)}>
+                <option value="">-- Chọn hoặc để trống --</option>
+                {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="lg:col-span-2">
               <label className="label">Môn học (Tùy chọn)</label>
               <input className="input" placeholder="VD: Lập trình Web" value={subject} onChange={(e) => setSubject(e.target.value)} />
             </div>
@@ -158,6 +177,9 @@ export function SessionsPanel() {
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 mt-2">
+                    {session.className && (
+                      <span className="flex items-center gap-1.5"><Users size={14} /> Lớp: <strong className="text-slate-700">{session.className}</strong></span>
+                    )}
                     {session.subject && (
                       <span className="flex items-center gap-1.5"><List size={14} /> Môn: <strong className="text-slate-700">{session.subject}</strong></span>
                     )}

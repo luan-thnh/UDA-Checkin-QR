@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import type { Student, CheckinSession } from '@checkin/shared';
 import { fetchStudents, fetchSessions, fetchAllAttendances } from '../services/api';
-import { Search, Filter, CalendarDays, CheckCircle2, XCircle } from 'lucide-react';
+import { Search, Filter, CalendarDays, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function ReportsPanel() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -13,6 +13,9 @@ export function ReportsPanel() {
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     async function loadData() {
@@ -73,6 +76,12 @@ export function ReportsPanel() {
     }
     return map;
   }, [attendances]);
+  
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage) || 1;
+  const paginatedStudents = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredStudents.slice(start, start + itemsPerPage);
+  }, [filteredStudents, currentPage]);
 
   if (loading) {
     return <div className="text-slate-500 py-12 text-center">Đang tải dữ liệu báo cáo...</div>;
@@ -104,7 +113,10 @@ export function ReportsPanel() {
                 className="input pl-10"
                 placeholder="Tìm MSSV hoặc Tên..."
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={e => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
               />
             </div>
           </div>
@@ -118,7 +130,10 @@ export function ReportsPanel() {
               <select 
                 className="input pl-10 appearance-none bg-white"
                 value={selectedClass}
-                onChange={e => setSelectedClass(e.target.value)}
+                onChange={e => {
+                  setSelectedClass(e.target.value);
+                  setCurrentPage(1);
+                }}
               >
                 <option value="">Tất cả các lớp</option>
                 {uniqueClasses.map(c => (
@@ -159,60 +174,84 @@ export function ReportsPanel() {
             Chưa có phiên điểm danh nào cho môn học này.
           </div>
         ) : (
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr>
-                <th className="table-th sticky left-0 z-10 bg-slate-50 min-w-[220px] shadow-[1px_0_0_0_#e2e8f0]">Sinh viên</th>
-                <th className="table-th text-center">Lớp</th>
-                {filteredSessions.map(session => (
-                  <th key={session.id} className="table-th text-center min-w-[120px]">
-                    <div className="font-semibold text-slate-700 truncate max-w-[120px]" title={session.title}>
-                      {session.title}
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      {new Date(session.startsAt).toLocaleDateString('vi-VN')}
-                    </div>
-                  </th>
-                ))}
-                <th className="table-th text-center bg-primary-light text-primary-dark">Tổng</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredStudents.map(student => {
-                let presentCount = 0;
-                
-                return (
-                  <tr key={student.studentCode} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="table-td sticky left-0 z-10 bg-white shadow-[1px_0_0_0_#f1f5f9] group-hover:bg-slate-50/50">
-                      <div className="font-semibold text-slate-800">{student.fullName}</div>
-                      <div className="text-xs text-slate-500 font-mono">{student.studentCode}</div>
-                    </td>
-                    <td className="table-td text-center text-slate-600">{student.className}</td>
-                    
-                    {filteredSessions.map(session => {
-                      const att = attendanceMap.get(`${student.studentCode}_${session.id}`);
-                      if (att) presentCount++;
+          <>
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr>
+                  <th className="table-th sticky left-0 z-10 bg-slate-50 min-w-[220px] shadow-[1px_0_0_0_#e2e8f0]">Sinh viên</th>
+                  <th className="table-th text-center">Lớp</th>
+                  {filteredSessions.map(session => (
+                    <th key={session.id} className="table-th text-center min-w-[120px]">
+                      <div className="font-semibold text-slate-700 truncate max-w-[120px]" title={session.title}>
+                        {session.title}
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">
+                        {new Date(session.startsAt).toLocaleDateString('vi-VN')}
+                      </div>
+                    </th>
+                  ))}
+                  <th className="table-th text-center bg-primary-light text-primary-dark">Tổng</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedStudents.map(student => {
+                  let presentCount = 0;
+                  
+                  return (
+                    <tr key={student.studentCode} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="table-td sticky left-0 z-10 bg-white shadow-[1px_0_0_0_#f1f5f9] group-hover:bg-slate-50/50">
+                        <div className="font-semibold text-slate-800">{student.fullName}</div>
+                        <div className="text-xs text-slate-500 font-mono">{student.studentCode}</div>
+                      </td>
+                      <td className="table-td text-center text-slate-600">{student.className}</td>
                       
-                      return (
-                        <td key={session.id} className="table-td text-center p-0">
-                          <div className="flex items-center justify-center h-full w-full py-3" title={att ? `Điểm danh lúc: ${new Date(att.checkedAt).toLocaleString('vi-VN')}` : 'Vắng'}>
-                            {att ? (
-                              <CheckCircle2 size={20} className="text-primary" />
-                            ) : (
-                              <XCircle size={20} className="text-slate-200" />
-                            )}
-                          </div>
-                        </td>
-                      );
-                    })}
-                    <td className="table-td text-center font-bold text-slate-700 bg-slate-50/30">
-                      {presentCount} / {filteredSessions.length}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {filteredSessions.map(session => {
+                        const att = attendanceMap.get(`${student.studentCode}_${session.id}`);
+                        if (att) presentCount++;
+                        
+                        return (
+                          <td key={session.id} className="table-td text-center p-0">
+                            <div className="flex items-center justify-center h-full w-full py-3" title={att ? `Điểm danh lúc: ${new Date(att.checkedAt).toLocaleString('vi-VN')}` : 'Vắng'}>
+                              {att ? (
+                                <CheckCircle2 size={20} className="text-primary" />
+                              ) : (
+                                <XCircle size={20} className="text-slate-200" />
+                              )}
+                            </div>
+                          </td>
+                        );
+                      })}
+                      <td className="table-td text-center font-bold text-slate-700 bg-slate-50/30">
+                        {presentCount} / {filteredSessions.length}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            
+            <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <span className="text-sm text-slate-500">
+                Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredStudents.length)} / {filteredStudents.length} sinh viên
+              </span>
+              <div className="flex gap-2">
+                <button 
+                  disabled={currentPage === 1} 
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  className="btn btn-outline px-2 py-1 disabled:opacity-50"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button 
+                  disabled={currentPage === totalPages} 
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="btn btn-outline px-2 py-1 disabled:opacity-50"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -5,6 +5,7 @@ import type { MemoryDb } from '../store/memory.store.js';
 export interface CreateSessionInput {
   title: string;
   subject?: string;
+  className?: string;
   latCenter: number;
   lngCenter: number;
   radiusM?: number;
@@ -28,6 +29,7 @@ export function createSession(db: MemoryDb, input: CreateSessionInput): CheckinS
     id: `SS-${Date.now().toString(36).toUpperCase()}`,
     title,
     subject: input.subject?.trim() || undefined,
+    className: input.className?.trim() || undefined,
     latCenter: input.latCenter,
     lngCenter: input.lngCenter,
     radiusM: normalizeRadiusM(input.radiusM),

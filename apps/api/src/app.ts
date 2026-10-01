@@ -166,6 +166,13 @@ export function createApp() {
       return;
     }
 
+    if (req.method === 'GET' && path === '/api/students/template') {
+      if (!requireAuth(req, res)) return;
+      const header = 'MSSV,HoTen,Lop,Khoa,Email\nSV001,Nguyen Van A,IT01,CNTT,nva@example.com\nSV002,Tran Thi B,IT01,CNTT,ttb@example.com';
+      sendCsv(res, 'template-danh-sach-sinh-vien.csv', header);
+      return;
+    }
+
     if (req.method === 'GET' && path === '/api/students/export') {
       if (!requireAuth(req, res)) return;
       sendCsv(res, 'danh-sach-sinh-vien.csv', studentsToCsv(listStudents(db, '')));

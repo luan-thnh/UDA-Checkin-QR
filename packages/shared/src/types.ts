@@ -18,6 +18,7 @@ export interface CheckinSession {
   id: string;
   title: string;
   subject?: string;
+  className?: string;
   latCenter: number;
   lngCenter: number;
   radiusM: number;
