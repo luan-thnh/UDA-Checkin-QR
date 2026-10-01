@@ -1,8 +1,9 @@
 import type { ApiResponse, AttendRequest, AttendSuccessData, CheckinSession } from '@checkin/shared';
 
 function apiBase(): string {
-  const fromEnv = (import.meta as unknown as { env?: Record<string, string> }).env?.['VITE_API_URL'];
-  return (fromEnv ?? 'http://localhost:3001').replace(/\/$/, '');
+  // MUST use literal 'import.meta.env.VITE_API_URL' so Vite statically replaces it.
+  // Dynamic access like (import.meta).env throws SyntaxError on older Zalo WebViews.
+  return (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 }
 
 async function readJson<T>(res: Response): Promise<T> {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Box, Button, Header, Input, Page, Spinner, Text, Icon } from 'zmp-ui';
+import { scanQRCode } from 'zmp-sdk/apis';
 import {
   haversineMeters,
   parseSessionIdFromQuery,
@@ -107,12 +108,45 @@ export function CheckinPage() {
     return (
       <Page>
         <Header title="Điểm danh UDA" showBackIcon={false} />
-        <div className="ci-wrap empty-state">
-          <div className="icon-wrapper">
+        <div className="ci-wrap empty-state text-center flex flex-col items-center justify-center h-full pt-20">
+          <div className="icon-wrapper mb-4">
             <Icon icon="zi-qrline" size={64} style={{ color: 'var(--primary)' }} />
           </div>
-          <h2>Chưa có mã phiên</h2>
-          <p>{sessionError}</p>
+          <h2 className="mb-2">Chưa có mã phiên</h2>
+          <p className="mb-6">{sessionError}</p>
+          <Button
+            onClick={async () => {
+              try {
+                const { content } = await scanQRCode({});
+                if (content) {
+                  // Neu quet duoc link zalo co chua session=... thi lay ra,
+                  // hoac neu quet duoc dang text session=ID
+                  let newSessionId = '';
+                  try {
+                    const url = new URL(content);
+                    newSessionId = url.searchParams.get('session') || '';
+                  } catch {
+                    if (content.includes('session=')) {
+                      newSessionId = content.split('session=')[1].split('&')[0];
+                    } else {
+                      newSessionId = content;
+                    }
+                  }
+                  
+                  if (newSessionId) {
+                    window.location.href = `/?session=${encodeURIComponent(newSessionId)}`;
+                  } else {
+                    alert('Mã QR không hợp lệ. Không tìm thấy mã phiên.');
+                  }
+                }
+              } catch (error) {
+                console.error(error);
+                alert('Lỗi khi mở camera quét QR.');
+              }
+            }}
+          >
+            Quét mã QR ngay
+          </Button>
         </div>
       </Page>
     );
