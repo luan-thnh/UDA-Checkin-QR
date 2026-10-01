@@ -58,6 +58,8 @@ export function CheckinPage() {
       return;
     }
     
+    setSessionError(''); // Clear old error
+
     // Kiem tra lich su checkin o local
     if (localStorage.getItem(`checkin_${sessionId}`)) {
       setAlreadyCheckedInLocal(true);
