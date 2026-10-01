@@ -13,10 +13,17 @@ export function DashboardApp() {
   if (!authed) return <LoginForm onDone={() => setAuthed(true)} />;
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: 16 }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Dashboard điểm danh</h2>
+    <div className="shell">
+      <header className="brandbar">
+        <div className="brand">
+          <span className="brand-mark">✓</span>
+          <div>
+            <h1>Điểm danh QR</h1>
+            <p>Zalo Mini App · Dashboard quản lý</p>
+          </div>
+        </div>
         <button
+          className="btn btn-ghost"
           onClick={() => {
             clearToken();
             setAuthed(false);
@@ -25,7 +32,7 @@ export function DashboardApp() {
           Đăng xuất
         </button>
       </header>
-      <nav style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
+      <nav className="tabs">
         <button onClick={() => setTab('sessions')} disabled={tab === 'sessions'}>
           Phiên + QR
         </button>
@@ -33,7 +40,7 @@ export function DashboardApp() {
           Sinh viên
         </button>
       </nav>
-      {tab === 'sessions' ? <SessionsPanel /> : <StudentsPanel />}
+      <main>{tab === 'sessions' ? <SessionsPanel /> : <StudentsPanel />}</main>
     </div>
   );
 }

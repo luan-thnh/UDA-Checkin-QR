@@ -39,6 +39,16 @@
       "startsAt": "2026-10-01T00:00:00.000Z",
       "endsAt": "2026-10-02T00:00:00.000Z",
       "status": "active"
+    },
+    {
+      "id": "SS-MUOZDH83",
+      "title": "Lập trình Web - Tuần 1",
+      "latCenter": 10.762622,
+      "lngCenter": 106.660172,
+      "radiusM": 2000,
+      "startsAt": "2026-10-01T03:34:43.821Z",
+      "endsAt": "2026-10-01T05:34:43.821Z",
+      "status": "active"
     }
   ],
   "attendances": [

@@ -3,6 +3,7 @@ import { Box, Button, Header, Input, Page, Spinner, Text } from 'zmp-ui';
 import {
   haversineMeters,
   parseSessionIdFromQuery,
+  validateAttendForm,
   type ApiResponse,
   type AttendSuccessData,
   type CheckinSession,
@@ -21,6 +22,7 @@ export function CheckinPage() {
   const [session, setSession] = useState<CheckinSession | null>(null);
   const [sessionError, setSessionError] = useState('');
   const [studentCode, setStudentCode] = useState('');
+  const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<ApiResponse<AttendSuccessData> | null>(null);
   const { fix, status, errorMessage, requestLocation } = useCheckinLocation();
@@ -43,9 +45,31 @@ export function CheckinPage() {
   }, [fix, session]);
 
   const inRange = distanceM !== null && session !== null && distanceM <= session.radiusM;
-  const canSubmit = Boolean(session && studentCode.trim() && fix && !submitting);
+
+  function submitReason(): string {
+    if (!session || sessionError) return 'Chưa tải được phiên điểm danh.';
+    if (!studentCode.trim()) return 'Nhập MSSV trước khi điểm danh.';
+    if (formError) return formError;
+    if (status === 'loading') return 'Đang chờ GPS…';
+    if (!fix) return 'Chưa có vị trí. Bấm “Lấy lại vị trí”.';
+    return '';
+  }
+
+  const blockReason = submitReason();
+  const canSubmit = !blockReason && !submitting;
+
+  function handleCodeChange(value: string) {
+    setStudentCode(value);
+    setResult(null);
+    setFormError(validateAttendForm(value).studentCode ?? '');
+  }
 
   async function handleSubmit() {
+    const fieldErrors = validateAttendForm(studentCode);
+    if (fieldErrors.studentCode) {
+      setFormError(fieldErrors.studentCode);
+      return;
+    }
     if (!fix || !session) return;
     setSubmitting(true);
     setResult(null);
@@ -68,63 +92,51 @@ export function CheckinPage() {
   return (
     <Page>
       <Header title="Check-in sinh viên" />
-      <Box p={4} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="ci-wrap">
         {!session && !sessionError ? <Spinner /> : null}
         {sessionError ? <StatusCard code="SESSION_CLOSED" message={sessionError} /> : null}
 
         {session ? (
-          <Box style={{ background: '#f2f4f7', borderRadius: 12 }} p={4}>
-            <Text size="large" bold>
-              {session.title}
-            </Text>
-            <Box mt={1}>
-              <Text size="small">
-                {new Date(session.startsAt).toLocaleString('vi-VN')} —{' '}
-                {new Date(session.endsAt).toLocaleString('vi-VN')}
-              </Text>
-            </Box>
-            <Box mt={1}>
-              <Text size="small">
-                Phạm vi: trong {session.radiusM}m từ trường • Trạng thái: {session.status}
-              </Text>
-            </Box>
-          </Box>
+          <div className="ci-session">
+            <h2>{session.title}</h2>
+            <p>
+              {new Date(session.startsAt).toLocaleString('vi-VN')} —{' '}
+              {new Date(session.endsAt).toLocaleString('vi-VN')}
+            </p>
+            <p>Trong {session.radiusM}m từ trường mới được điểm danh</p>
+            <span className="pill">{session.status === 'active' ? 'Đang mở' : 'Đã đóng'}</span>
+          </div>
         ) : null}
 
-        <Box>
-          <Text bold>MSSV</Text>
-          <Box mt={1}>
-            <Input
-              placeholder="VD: SV001"
-              value={studentCode}
-              onChange={(e) => setStudentCode(e.target.value)}
-            />
-          </Box>
-        </Box>
+        <div className="ci-card">
+          <h4>MSSV của bạn</h4>
+          <Input placeholder="VD: SV001" value={studentCode} onChange={(e) => handleCodeChange(e.target.value)} />
+          <div className="ci-error">{formError}</div>
+        </div>
 
-        <Box style={{ background: '#f2f4f7', borderRadius: 12 }} p={4}>
+        <div className="ci-card">
+          <h4>Vị trí</h4>
           {status === 'loading' ? <Text>Đang lấy vị trí…</Text> : null}
-          {status === 'error' ? <Text>GPS lỗi: {errorMessage}</Text> : null}
+          {status === 'error' ? <div className="ci-error">GPS lỗi: {errorMessage}</div> : null}
           {fix && distanceM !== null ? (
-            <Text>
-              Bạn cách trường {distanceM}m ({fix.source === 'zalo' ? 'Zalo GPS' : 'trình duyệt'}) —{' '}
+            <div className={`ci-gps ${inRange ? 'ok' : 'far'}`}>
+              Cách trường {distanceM}m ({fix.source === 'zalo' ? 'Zalo GPS' : 'trình duyệt'}) —{' '}
               {inRange ? 'đủ điều kiện' : 'ngoài phạm vi'}.
-            </Text>
+            </div>
           ) : null}
-          {fix && 'accuracyM' in fix && fix.accuracyM && fix.accuracyM > 200 ? (
-            <Box mt={1}>
-              <Text size="small">GPS yếu (±{Math.round(fix.accuracyM)}m). Hãy ra chỗ thoáng.</Text>
-            </Box>
+          {fix?.accuracyM && fix.accuracyM > 200 ? (
+            <div className="ci-hint">GPS yếu (±{Math.round(fix.accuracyM)}m). Ra chỗ thoáng rồi lấy lại.</div>
           ) : null}
           <Box mt={2}>
             <Button variant="secondary" onClick={requestLocation}>
               Lấy lại vị trí
             </Button>
           </Box>
-        </Box>
+        </div>
 
+        {!canSubmit && !submitting ? <div className="ci-hint">{blockReason}</div> : null}
         <Button disabled={!canSubmit} loading={submitting} onClick={handleSubmit}>
-          {inRange === false ? 'Ngoài phạm vi — vẫn thử gửi' : 'Điểm danh'}
+          Điểm danh
         </Button>
 
         {result ? (
@@ -134,7 +146,7 @@ export function CheckinPage() {
             checkedAt={result.data?.attendance.checkedAt}
           />
         ) : null}
-      </Box>
+      </div>
     </Page>
   );
 }

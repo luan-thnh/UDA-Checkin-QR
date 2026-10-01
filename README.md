@@ -67,7 +67,7 @@ Lần đầu chạy hơi lâu vì tự build `packages/shared` (predev/prebuild 
 ## 6. Test + kiểm tra code
 
 ```bash
-pnpm --filter @checkin/shared test     # 6 test: Haversine, MSSV, radius, Excel parse
+pnpm --filter @checkin/shared test     # 9 test: Haversine, MSSV, radius, Excel parse, form validate
 pnpm --filter @checkin/api test        # 9 test: check-in 1 lần, ngoài 2km, đóng phiên...
 pnpm --filter @checkin/miniapp test    # 2 test: đọc sessionId từ QR, ngưỡng 2km
 pnpm --filter @checkin/dashboard test  # 2 test: map header Excel, xuất CSV

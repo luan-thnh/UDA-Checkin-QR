@@ -9,8 +9,8 @@ export function DashboardApp() {
     const [tab, setTab] = useState('sessions');
     if (!authed)
         return _jsx(LoginForm, { onDone: () => setAuthed(true) });
-    return (_jsxs("div", { style: { maxWidth: 960, margin: '0 auto', padding: 16 }, children: [_jsxs("header", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' }, children: [_jsx("h2", { children: "Dashboard \u0111i\u1EC3m danh" }), _jsx("button", { onClick: () => {
+    return (_jsxs("div", { className: "shell", children: [_jsxs("header", { className: "brandbar", children: [_jsxs("div", { className: "brand", children: [_jsx("span", { className: "brand-mark", children: "\u2713" }), _jsxs("div", { children: [_jsx("h1", { children: "\u0110i\u1EC3m danh QR" }), _jsx("p", { children: "Zalo Mini App \u00B7 Dashboard qu\u1EA3n l\u00FD" })] })] }), _jsx("button", { className: "btn btn-ghost", onClick: () => {
                             clearToken();
                             setAuthed(false);
-                        }, children: "\u0110\u0103ng xu\u1EA5t" })] }), _jsxs("nav", { style: { display: 'flex', gap: 8, margin: '12px 0' }, children: [_jsx("button", { onClick: () => setTab('sessions'), disabled: tab === 'sessions', children: "Phi\u00EAn + QR" }), _jsx("button", { onClick: () => setTab('students'), disabled: tab === 'students', children: "Sinh vi\u00EAn" })] }), tab === 'sessions' ? _jsx(SessionsPanel, {}) : _jsx(StudentsPanel, {})] }));
+                        }, children: "\u0110\u0103ng xu\u1EA5t" })] }), _jsxs("nav", { className: "tabs", children: [_jsx("button", { onClick: () => setTab('sessions'), disabled: tab === 'sessions', children: "Phi\u00EAn + QR" }), _jsx("button", { onClick: () => setTab('students'), disabled: tab === 'students', children: "Sinh vi\u00EAn" })] }), _jsx("main", { children: tab === 'sessions' ? _jsx(SessionsPanel, {}) : _jsx(StudentsPanel, {}) })] }));
 }

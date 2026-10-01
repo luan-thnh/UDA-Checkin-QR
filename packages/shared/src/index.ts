@@ -6,6 +6,13 @@ export {
   type ImportStudentsResult,
 } from './excel.js';
 export {
+  validateLoginForm,
+  validateSessionForm,
+  validateAttendForm,
+  type FieldErrors,
+  type SessionFormValues,
+} from './forms.js';
+export {
   normalizeStudentCode,
   isValidStudentCode,
   isValidCoordinate,

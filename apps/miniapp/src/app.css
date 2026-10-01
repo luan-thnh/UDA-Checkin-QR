@@ -1,0 +1,58 @@
+:root {
+  --paper: #ffffff;
+  --wash: #f3f7f4;
+  --ink: #152a20;
+  --muted: #5f7268;
+  --line: #e2eae5;
+  --primary: #00a457;
+  --primary-deep: #007a42;
+  --primary-tint: #e2f5ea;
+  --accent: #f15d2e;
+  --accent-tint: #fdeee6;
+  --danger: #cf4444;
+  --danger-tint: #fdecec;
+  --radius: 14px;
+}
+
+body { margin: 0; background: var(--wash); color: var(--ink); font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; }
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+.ci-wrap { display: flex; flex-direction: column; gap: 12px; padding: 16px 16px 32px; animation: rise-in 0.3s ease; }
+
+.ci-session {
+  background: linear-gradient(135deg, #0b3d27, var(--primary) 130%);
+  color: #fff; border-radius: var(--radius); padding: 18px;
+}
+.ci-session h2 { margin: 0 0 4px; font-size: 19px; }
+.ci-session p { margin: 2px 0 0; font-size: 13px; opacity: 0.9; }
+.ci-session .pill {
+  display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 700;
+  background: rgba(255, 255, 255, 0.2); border-radius: 999px; padding: 2px 12px;
+}
+
+.ci-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.ci-card h4 { margin: 0 0 8px; font-size: 15px; }
+
+.ci-gps { font-size: 14px; }
+.ci-gps.ok { color: var(--primary-deep); font-weight: 600; }
+.ci-gps.far { color: var(--accent); font-weight: 600; }
+.ci-hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.ci-error { font-size: 13px; color: var(--danger); margin-top: 6px; min-height: 18px; }
+
+.ci-result { border-radius: var(--radius); padding: 16px; animation: rise-in 0.25s ease; }
+.ci-result h3 { margin: 0 0 4px; font-size: 16px; }
+.ci-result p { margin: 0; font-size: 14px; }
+.ci-result.success { background: var(--primary-tint); border: 1px solid #9ed9b6; }
+.ci-result.success h3 { color: var(--primary-deep); }
+.ci-result.warn { background: #fff4d6; border: 1px solid #ead28a; }
+.ci-result.warn h3 { color: #8a6d00; }
+.ci-result.fail { background: var(--danger-tint); border: 1px solid #f0b4b4; }
+.ci-result.fail h3 { color: var(--danger); }

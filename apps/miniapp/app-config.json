@@ -1,4 +1,4 @@
 {
-  "app": { "name": "Check-in sinh viên", "id": "MINI_APP_ID" },
+  "app": { "name": "UDA Checkin QR", "id": "4134446949382821265" },
   "permissions": ["scope.userLocation"]
 }
