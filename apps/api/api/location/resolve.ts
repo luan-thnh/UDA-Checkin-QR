@@ -1,6 +1,7 @@
-import { readBody, type VercelReq, type VercelRes } from '../../src/vercel/handler.js';
+import { handleCors, readBody, type VercelReq, type VercelRes} from '../../src/vercel/handler.js';
 
 export default function handler(req: VercelReq, res: VercelRes) {
+  if (handleCors(req, res)) return;
   if (req.method !== 'POST') {
     res.status(405).json({ code: 'INVALID_INPUT', message: 'Method not allowed.', data: null });
     return;

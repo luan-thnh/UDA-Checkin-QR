@@ -7,6 +7,7 @@ import { checkIn } from './services/attendance.service.js';
 import { listStudents, upsertStudents } from './services/student.service.js';
 import { createSession, listSessions, closeSession } from './services/session.service.js';
 import { createMemoryDb, seedDemoData, type MemoryDb } from './store/memory.store.js';
+import { isOriginAllowed } from './utils/cors.js';
 import { createAdminToken, getAdminCredentials, isAuthorized } from './utils/auth.js';
 
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'data');
@@ -96,6 +97,19 @@ export function createApp() {
   return createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
     const path = url.pathname;
+    const origin = req.headers.origin;
+
+    if (isOriginAllowed(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin ?? '*');
+      res.setHeader('Vary', 'Origin');
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'content-type,authorization');
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
 
     if (req.method === 'GET' && path === '/health') {
       sendJson(res, 200, { ok: true });

@@ -1,5 +1,6 @@
-import { createSupabaseAdmin, isSupabaseEnabled } from '../../src/db/supabase.js';
-import { isAuthorized } from '../../src/utils/auth.js';
+import { createSupabaseAdmin, isSupabaseEnabled } from '../db/supabase.js';
+import { isAuthorized } from '../utils/auth.js';
+import { isOriginAllowed } from '../utils/cors.js';
 
 export interface VercelReq {
   method?: string;
@@ -58,4 +59,24 @@ export function sendCsv(res: VercelRes, filename: string, csv: string): void {
   res.setHeader('content-type', 'text/csv; charset=utf-8');
   res.setHeader('content-disposition', `attachment; filename="${filename}"`);
   res.status(200).send('\uFEFF' + csv);
+}
+
+function firstHeader(headers: VercelReq['headers'], name: string): string | undefined {
+  const raw = headers?.[name] ?? headers?.[name.toLowerCase()];
+  return Array.isArray(raw) ? raw[0] : raw;
+}
+
+export function handleCors(req: VercelReq, res: VercelRes): boolean {
+  const origin = firstHeader(req.headers, 'origin');
+  if (isOriginAllowed(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin ?? '*');
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'content-type,authorization');
+  if (req.method === 'OPTIONS') {
+    res.status(204).json({});
+    return true;
+  }
+  return false;
 }

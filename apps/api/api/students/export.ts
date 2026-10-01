@@ -1,7 +1,8 @@
 import { studentsToCsv } from '@checkin/shared';
-import { requireAdmin, sendCsv, supabaseOr500, type VercelReq, type VercelRes } from '../../src/vercel/handler.js';
+import { handleCors, requireAdmin, sendCsv, supabaseOr500, type VercelReq, type VercelRes} from '../../src/vercel/handler.js';
 
 export default async function handler(req: VercelReq, res: VercelRes) {
+  if (handleCors(req, res)) return;
   if (req.method !== 'GET') {
     res.status(405).json({ code: 'INVALID_INPUT', message: 'Method not allowed.', data: null });
     return;

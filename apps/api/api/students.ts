@@ -1,4 +1,5 @@
 import {
+  handleCors,
   queryParam,
   requireAdmin,
   supabaseOr500,
@@ -7,6 +8,7 @@ import {
 } from '../src/vercel/handler.js';
 
 export default async function handler(req: VercelReq, res: VercelRes) {
+  if (handleCors(req, res)) return;
   const supabase = supabaseOr500(res);
   if (!supabase) return;
   if (!requireAdmin(req, res)) return;

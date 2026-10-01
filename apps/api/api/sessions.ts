@@ -2,6 +2,7 @@ import { buildSessionDeepLink } from '@checkin/shared';
 import { createSession } from '../src/services/session.service.js';
 import type { MemoryDb } from '../src/store/memory.store.js';
 import {
+  handleCors,
   readBody,
   requireAdmin,
   supabaseOr500,
@@ -10,6 +11,7 @@ import {
 } from '../src/vercel/handler.js';
 
 export default async function handler(req: VercelReq, res: VercelRes) {
+  if (handleCors(req, res)) return;
   const supabase = supabaseOr500(res);
   if (!supabase) return;
 
