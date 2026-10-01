@@ -49,6 +49,26 @@
       "startsAt": "2026-10-01T03:34:43.821Z",
       "endsAt": "2026-10-01T05:34:43.821Z",
       "status": "active"
+    },
+    {
+      "id": "SS-MUOZX7NC",
+      "title": "Lập trình Web - Tuần 1",
+      "latCenter": 10.762622,
+      "lngCenter": 106.660172,
+      "radiusM": 2000,
+      "startsAt": "2026-10-01T03:50:04.524Z",
+      "endsAt": "2026-10-01T05:50:04.524Z",
+      "status": "active"
+    },
+    {
+      "id": "SS-MUOZXQP0",
+      "title": "Lập trình Web - Tuần 1",
+      "latCenter": 10.762622,
+      "lngCenter": 106.660172,
+      "radiusM": 2000,
+      "startsAt": "2026-10-01T03:50:29.209Z",
+      "endsAt": "2026-10-01T05:50:29.209Z",
+      "status": "active"
     }
   ],
   "attendances": [

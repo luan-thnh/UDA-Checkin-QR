@@ -94,13 +94,14 @@ PORT=3001 node apps/api/dist/index.js     # API (local dùng bản Node, Vercel 
 
 Dùng **Supabase** (Postgres online). SQLite/file local chỉ dev — lên Vercel là mất data.
 
-1. Tạo project free https://supabase.com → chạy `apps/api/migrations/001_init.sql` trong SQL Editor.
-2. Project Vercel **checkin-api**: Root Directory `apps/api`, Build Command `pnpm --filter @checkin/shared build`.
-   Env: `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_TOKEN`, `CORS_ORIGINS` (= domain dashboard + miniapp), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `MINI_APP_ID`, `ZALO_APP_SECRET`.
-   API chạy dạng Serverless Functions (`apps/api/api/*.ts`), logic check-in 1 lần + 2km giống hệt local.
-3. Project Vercel **checkin-dashboard**: Root Directory `apps/dashboard`.
-   Env: `VITE_API_URL=https://<ten-api>.vercel.app`.
-4. Mini App: set `VITE_API_URL` về URL api Vercel → `pnpm --filter @checkin/miniapp build` → upload `apps/miniapp/dist` lên https://miniapp.zaloplatforms.com/ (xin quyền `scope.userLocation`, xem `apps/miniapp/app-config.json`).
+Chi tiết từng bước (Supabase → 2 project Vercel → Zalo, kèm bảng env và xử lý lỗi): xem **`DEPLOY.md`**.
+
+Tóm tắt:
+
+1. Supabase → chạy `apps/api/migrations/001_init.sql` → lấy `SUPABASE_URL` + key `service_role`.
+2. Vercel **checkin-api**: Root `apps/api`, Build `pnpm --filter @checkin/shared build`, đủ 8 env (`ADMIN_*`, `CORS_ORIGINS`, `SUPABASE_*`, `MINI_APP_ID`, `ZALO_APP_SECRET`).
+3. Vercel **checkin-dashboard**: Root `apps/dashboard`, env `VITE_API_URL=<URL-api>`, xong quay lại set `CORS_ORIGINS` cho api.
+4. Mini App: `VITE_API_URL` = URL api Vercel → build → upload `apps/miniapp/dist` lên https://miniapp.zaloplatforms.com/.
 
 Chi tiết biến môi trường: `.env.example` ở root và từng app.
 
