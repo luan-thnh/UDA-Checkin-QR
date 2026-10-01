@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from 'zmp-sdk';
-import { Box, Button, Header, Input, Page, Spinner, Icon, useNavigate } from 'zmp-ui';
+import { Button, Header, Input, Page, Spinner, Icon, useNavigate } from 'zmp-ui';
 import {
   parseSessionIdFromQuery,
   validateAttendForm,
@@ -135,8 +135,8 @@ export function CheckinPage() {
     return (
       <Page className="page">
         <Header title="Điểm danh UDA" onBackClick={handleBack} />
-        <div className="section-container" style={{ textAlign: 'center', marginTop: 40 }}>
-          <div className="icon-wrapper" style={{ margin: '0 auto 24px' }}>
+        <div className="empty-state ci-wrap">
+          <div className="icon-wrapper" style={{ margin: '40px auto 24px' }}>
             <Icon icon="zi-qrline" size={48} style={{ color: 'var(--primary)' }} />
           </div>
           <h2 style={{ marginBottom: 12 }}>Bắt đầu điểm danh</h2>
@@ -145,6 +145,7 @@ export function CheckinPage() {
           </p>
           <Button
             className="btn-submit"
+            fullWidth
             onClick={() => {
               try {
                 api.scanQRCode({
@@ -183,8 +184,8 @@ export function CheckinPage() {
             Quét mã QR ngay
           </Button>
           
-          <div style={{ marginTop: 40, borderTop: '1px solid var(--border)', paddingTop: 24 }}>
-            <p style={{ color: 'var(--muted)', marginBottom: 16, fontSize: 14 }}>Hoặc nhập mã phiên bằng tay:</p>
+          <div style={{ marginTop: 40, borderTop: '1px solid var(--line)', paddingTop: 24, width: '100%', textAlign: 'left' }}>
+            <p style={{ color: 'var(--muted)', marginBottom: 16, fontSize: 14, fontWeight: 500 }}>Hoặc nhập mã phiên bằng tay:</p>
             <Input
               type="text"
               placeholder="VD: SS-MUP6ILIE"
@@ -215,11 +216,11 @@ export function CheckinPage() {
   return (
     <Page className="page">
       <Header title="Điểm danh sinh viên" onBackClick={handleBack} />
-      <Box className="section-container" style={{ marginTop: 16 }}>
+      <div className="ci-wrap">
         {!session && !sessionError ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted)' }}>
+          <div className="loading-state">
             <Spinner visible />
-            <p>Đang tải thông tin phiên...</p>
+            <span>Đang tải thông tin phiên...</span>
           </div>
         ) : null}
         
@@ -229,8 +230,8 @@ export function CheckinPage() {
               <Icon icon="zi-warning-solid" size={32} style={{ color: 'var(--danger)' }} />
             </div>
             <h3>Lỗi tải dữ liệu</h3>
-            <p style={{ wordBreak: 'break-word' }}>{sessionError}</p>
-            <Button size="small" variant="secondary" onClick={() => { setSessionId(''); navigate('/', { replace: true }); }} style={{ marginTop: 16 }}>Thử mã khác</Button>
+            <p style={{ wordBreak: 'break-word', margin: '12px 0', fontSize: 14 }}>{sessionError}</p>
+            <Button size="small" variant="secondary" onClick={() => { setSessionId(''); navigate('/', { replace: true }); }}>Thử mã khác</Button>
           </div>
         ) : null}
 
@@ -239,84 +240,82 @@ export function CheckinPage() {
             <div className="ci-session-bg"></div>
             <div className="ci-session-content">
               <h2>{session.title}</h2>
-              <div className="ci-session-meta">
-                <Icon icon="zi-bookmark" size={16} /> <span>{session.subject}</span>
+              <div className="subject">
+                <Icon icon="zi-bookmark" size={16} style={{ marginRight: 6 }} /> {session.subject}
               </div>
-              <div className="ci-session-meta">
+              <div className="time-info">
                 <Icon icon="zi-clock-1" size={16} /> 
                 <span>Đến {new Date(session.endsAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
           </div>
         ) : null}
-      </Box>
 
-      {session ? (
-        <Box className="section-container ci-card ci-form-container">
-          <div className="ci-gps-status">
-            <div className="icon-wrapper-small">
-              <Icon icon="zi-location-solid" size={20} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div className="label">Vị trí của bạn</div>
-              <div className="value">
-                {status === 'ok' && fix
-                  ? distanceM !== null
-                    ? `Cách điểm danh ${Math.round(distanceM)}m`
-                    : 'Đang tính toán...'
-                  : status === 'error'
-                  ? 'Bị từ chối (Chưa cấp quyền)'
-                  : errorMessage || 'Đang chờ vị trí...'}
+        {session ? (
+          <div className="ci-card">
+            <div className="ci-gps">
+              <Icon icon="zi-location-solid" size={24} style={{ color: 'var(--primary)' }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 16, marginBottom: 4 }}>Vị trí của bạn</div>
+                <div className="distance-text">
+                  {status === 'ok' && fix
+                    ? distanceM !== null
+                      ? <span className={distanceM <= session.radiusM ? 'text-green' : 'text-red'}>Cách điểm danh {Math.round(distanceM)}m</span>
+                      : 'Đang tính toán...'
+                    : status === 'error'
+                    ? <span className="text-red">Bị từ chối (Chưa cấp quyền)</span>
+                    : errorMessage || 'Đang chờ vị trí...'}
+                </div>
               </div>
+              {status !== 'ok' ? (
+                <Button size="small" onClick={requestLocation} variant="secondary">Cấp quyền</Button>
+              ) : null}
             </div>
-            {status !== 'ok' ? (
-              <Button size="small" onClick={requestLocation} variant="secondary">Cấp quyền</Button>
-            ) : null}
-          </div>
 
-          {result ? (
-            <div style={{ marginTop: 24 }}>
-              <StatusCard 
-                code={result.code} 
-                message={result.message} 
-                checkedAt={result.data?.attendance?.checkedAt}
-              />
-            </div>
-          ) : (
-            <div style={{ marginTop: 24 }}>
-              {alreadyCheckedInLocal ? (
-                <StatusCard code="ALREADY_CHECKED" message="Bạn đã check-in thành công trên thiết bị này." />
-              ) : (
-                <>
-                  <div className="ci-input-group">
-                    <label>Mã số sinh viên (MSSV)</label>
-                    <Input
-                      type="text"
-                      placeholder="Nhập MSSV của bạn (vd: 205053120)"
-                      value={studentCode}
-                      onChange={(e) => handleCodeChange(e.target.value)}
-                      errorText={formError}
-                      status={formError ? 'error' : ''}
-                      clearable
-                      disabled={submitting}
-                    />
-                  </div>
-                  
-                  <Button
-                    className="btn-submit"
-                    fullWidth
-                    loading={submitting}
-                    disabled={!canSubmit || !studentCode.trim()}
-                    onClick={handleSubmit}
-                  >
-                    {blockReason || 'Xác nhận điểm danh'}
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-        </Box>
-      ) : null}
+            {result ? (
+              <div style={{ marginTop: 24 }}>
+                <StatusCard 
+                  code={result.code} 
+                  message={result.message} 
+                  checkedAt={result.data?.attendance?.checkedAt}
+                />
+              </div>
+            ) : (
+              <div style={{ marginTop: 24 }}>
+                {alreadyCheckedInLocal ? (
+                  <StatusCard code="ALREADY_CHECKED" message="Bạn đã check-in thành công trên thiết bị này." />
+                ) : (
+                  <>
+                    <div style={{ marginBottom: 24 }}>
+                      <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: 15 }}>Mã số sinh viên (MSSV)</label>
+                      <Input
+                        type="text"
+                        placeholder="Nhập MSSV của bạn (vd: 205053120)"
+                        value={studentCode}
+                        onChange={(e) => handleCodeChange(e.target.value)}
+                        errorText={formError}
+                        status={formError ? 'error' : ''}
+                        clearable
+                        disabled={submitting}
+                      />
+                    </div>
+                    
+                    <Button
+                      className="btn-submit"
+                      fullWidth
+                      loading={submitting}
+                      disabled={!canSubmit || !studentCode.trim()}
+                      onClick={handleSubmit}
+                    >
+                      {blockReason || 'Xác nhận điểm danh'}
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
     </Page>
   );
 }
