@@ -194,7 +194,15 @@ export function CheckinPage() {
           </div>
         ) : null}
         
-        {sessionError && sessionId ? <StatusCard code="SESSION_CLOSED" message={sessionError} /> : null}
+        {sessionError && sessionId ? (
+          <div className="ci-result fail">
+            <div className="icon-wrapper-small">
+              <Icon icon="zi-warning-solid" size={32} style={{ color: 'var(--danger)' }} />
+            </div>
+            <h3>Lỗi tải dữ liệu</h3>
+            <p style={{ wordBreak: 'break-word' }}>{sessionError}</p>
+          </div>
+        ) : null}
 
         {session ? (
           <div className="ci-session">

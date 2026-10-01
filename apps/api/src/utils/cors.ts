@@ -13,8 +13,11 @@ export function isOriginAllowed(origin: string | undefined): boolean {
   if (allowed.includes('*')) return true;
   if (allowed.includes(origin)) return true;
   
-  // Allow all Vercel preview and production deployments automatically
+  // Allow Vercel preview/production
   if (origin.endsWith('.vercel.app')) return true;
+  
+  // Allow Zalo Mini App Webview domains
+  if (origin === 'https://h5.zadn.vn' || origin === 'zbrowser://h5.zadn.vn' || origin.endsWith('.zadn.vn')) return true;
   
   return false;
 }
