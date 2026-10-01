@@ -5,14 +5,16 @@
   "scripts": {
     "dev": "node --watch dist/index.js",
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.vercel.json",
+    "vercel-build": "pnpm --filter @checkin/shared build",
     "test": "node --test dist-test/*.test.js",
     "pretest": "tsc -p tsconfig.test.json",
     "predev": "tsc -p tsconfig.json",
     "lint": "echo \"(P0) no eslint yet\""
   },
   "dependencies": {
-    "@checkin/shared": "workspace:*"
+    "@checkin/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.117.2"
   },
   "devDependencies": {
     "typescript": "^5.6.3"

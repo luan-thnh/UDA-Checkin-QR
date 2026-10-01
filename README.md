@@ -37,7 +37,21 @@ Xem `AGENTS.md`. Skills đã cài toàn cục (`~/.agents/skills/`):
 - P2 (xong): Mini App ZaUI checkin (MSSV + GPS Zalo/browser + hien khoang cach + 3 trang thai). Chay browser: `pnpm --filter @checkin/miniapp dev` (port 3002, `?session=...`). Trong Zalo: can doi token location o `POST /api/location/resolve` (can ZALO_APP_ID/SECRET).
 - P3 (xong): Dashboard login + SV import Excel/xlsx + export CSV + tao phien + QR SVG + live 5s + dong phien. Chay: `pnpm --filter @checkin/dashboard dev` (port 3000).
 
-## Demo full 3 đầu (2 phút)
+## Deploy Vercel (không cần server riêng)
+
+Dùng **Supabase** (Postgres online). SQLite/file local chỉ dev, lên Vercel là mất data.
+
+1. Tạo project free https://supabase.com → chạy `apps/api/migrations/001_init.sql` trong SQL Editor.
+2. Project Vercel **checkin-api**: Root Directory `apps/api`, Build Command `pnpm --filter @checkin/shared build`.
+   Env: `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `MINI_APP_ID`.
+   API chạy dạng Serverless Functions (`apps/api/api/*.ts`), logic check-in 1 lần + 2km giống hệt local.
+3. Project Vercel **checkin-dashboard**: Root Directory `apps/dashboard`.
+   Env: `VITE_API_URL=https://<ten-api>.vercel.app`.
+4. Mini App: set `VITE_API_URL` về URL api Vercel rồi build, upload `apps/miniapp/dist` lên https://miniapp.zaloplatforms.com/.
+
+Chi tiết biến môi trường: xem `.env.example` ở root và từng app.
+
+## Demo full 3 đầu local (2 phút)
 
 ```bash
 PORT=3001 node apps/api/dist/index.js &
