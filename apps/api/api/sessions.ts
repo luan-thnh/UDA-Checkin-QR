@@ -1,6 +1,5 @@
 import { buildSessionDeepLink } from '@checkin/shared';
 import { createSession } from '../src/services/session.service.js';
-import type { MemoryDb } from '../src/store/memory.store.js';
 import {
   handleCors,
   readBody,
@@ -26,23 +25,10 @@ export default async function handler(req: VercelReq, res: VercelRes) {
     if (!requireAdmin(req, res)) return;
     try {
       // Dung lai logic validate bang cach chay qua memory store tam
-      const { createMemoryDb } = await import('../src/store/memory.store.js');
-      const tempDb: MemoryDb = createMemoryDb();
-      const session = createSession(tempDb, readBody(req));
-      const { error } = await supabase.from('sessions').insert({
-        id: session.id,
-        title: session.title,
-        subject: session.subject ?? null,
-        lat_center: session.latCenter,
-        lng_center: session.lngCenter,
-        radius_m: session.radiusM,
-        starts_at: session.startsAt,
-        ends_at: session.endsAt,
-        status: 'active',
-      });
-      if (error) throw new Error(error.message);
+      const session = await createSession(readBody(req));
       const miniAppId = process.env.MINI_APP_ID ?? 'MINI_APP_ID';
       res.status(201).json({
+
         code: 'SUCCESS',
         message: 'Tao phien thanh cong.',
         data: { ...session, qrPayload: buildSessionDeepLink(miniAppId, session.id) },

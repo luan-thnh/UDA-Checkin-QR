@@ -1,63 +1,13 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+
 import { parseStudentRows, studentsToCsv, buildSessionDeepLink } from '@checkin/shared';
 import { checkIn } from './services/attendance.service.js';
 import { listStudents, upsertStudents } from './services/student.service.js';
 import { createSession, listSessions, closeSession } from './services/session.service.js';
-import { createMemoryDb, seedDemoData, type MemoryDb } from './store/memory.store.js';
 import { isOriginAllowed } from './utils/cors.js';
 import { createAdminToken, getAdminCredentials, isAuthorized } from './utils/auth.js';
 
-const dataDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'data');
-const dbFile = join(dataDir, 'db.json');
 
-export const db: MemoryDb = createMemoryDb();
-restoreOrSeed();
-
-function restoreOrSeed(): void {
-  try {
-    if (existsSync(dbFile)) {
-      const raw = JSON.parse(readFileSync(dbFile, 'utf-8')) as {
-        students?: unknown[];
-        sessions?: unknown[];
-        attendances?: unknown[];
-      };
-      for (const s of raw.students ?? []) db.students.set((s as { studentCode: string }).studentCode, s as never);
-      for (const s of raw.sessions ?? []) db.sessions.set((s as { id: string }).id, s as never);
-      for (const a of raw.attendances ?? []) {
-        const rec = a as { sessionId: string; studentCode: string };
-        db.attendances.set(`${rec.sessionId}::${rec.studentCode}`, a as never);
-      }
-      return;
-    }
-  } catch {
-    // file hong -> seed lai
-  }
-  seedDemoData(db);
-  persist();
-}
-
-function persist(): void {
-  try {
-    mkdirSync(dataDir, { recursive: true });
-    writeFileSync(
-      dbFile,
-      JSON.stringify(
-        {
-          students: [...db.students.values()],
-          sessions: [...db.sessions.values()],
-          attendances: [...db.attendances.values()],
-        },
-        null,
-        2,
-      ),
-    );
-  } catch {
-    // P0: bo qua loi ghi file
-  }
-}
 
 function readJsonBody(req: IncomingMessage): Promise<Record<string, never>> {
   return new Promise((resolve, reject) => {
@@ -147,7 +97,7 @@ export function createApp() {
       sendJson(res, 200, {
         code: 'SUCCESS',
         message: 'OK',
-        data: listStudents(db, url.searchParams.get('q') ?? ''),
+        data: await listStudents(url.searchParams.get('q') ?? ''),
       });
       return;
     }
@@ -156,8 +106,8 @@ export function createApp() {
       if (!requireAuth(req, res)) return;
       const body = (await readJsonBody(req)) as { rows?: unknown[] };
       const { imported, skipped } = parseStudentRows((body.rows ?? []) as never);
-      upsertStudents(db, imported);
-      persist();
+      await upsertStudents(imported);
+      
       sendJson(res, 200, {
         code: 'SUCCESS',
         message: `Nhap ${imported.length} SV, bo qua ${skipped.length} dong.`,
@@ -175,7 +125,7 @@ export function createApp() {
 
     if (req.method === 'GET' && path === '/api/students/export') {
       if (!requireAuth(req, res)) return;
-      sendCsv(res, 'danh-sach-sinh-vien.csv', studentsToCsv(listStudents(db, '')));
+      sendCsv(res, 'danh-sach-sinh-vien.csv', studentsToCsv(await listStudents('')));
       return;
     }
 
@@ -184,8 +134,8 @@ export function createApp() {
       const className = url.searchParams.get('className');
       if (className) {
         const { deleteClass } = await import('./services/student.service.js');
-        const { deleted } = deleteClass(db, className);
-        persist();
+        const { deleted } = await deleteClass(className);
+        
         sendJson(res, 200, { code: 'SUCCESS', message: `Da xoa ${deleted} sinh vien lop ${className}`, data: { deleted } });
       } else {
         sendJson(res, 400, { code: 'INVALID_INPUT', message: 'Thieu tham so className', data: null });
@@ -198,8 +148,8 @@ export function createApp() {
       const studentCode = decodeURIComponent(path.replace('/api/students/', ''));
       if (studentCode !== 'export' && studentCode !== 'import' && studentCode !== 'template') {
         const { deleteStudent } = await import('./services/student.service.js');
-        const deleted = deleteStudent(db, studentCode);
-        if (deleted) persist();
+        const deleted = await deleteStudent(studentCode);
+        if (deleted) 
         sendJson(res, 200, { code: 'SUCCESS', message: deleted ? 'Da xoa sinh vien' : 'Khong tim thay sinh vien', data: { deleted } });
         return;
       }
@@ -208,9 +158,9 @@ export function createApp() {
     if (req.method === 'POST' && path === '/api/sessions') {
       if (!requireAuth(req, res)) return;
       try {
-        const body = (await readJsonBody(req)) as unknown as Parameters<typeof createSession>[1];
-        const session = createSession(db, body);
-        persist();
+        const body = (await readJsonBody(req)) as unknown as Parameters<typeof createSession>[0];
+        const session = await createSession(body);
+        
         const miniAppId = process.env.MINI_APP_ID ?? 'MINI_APP_ID';
         sendJson(res, 201, {
           code: 'SUCCESS',
@@ -230,7 +180,7 @@ export function createApp() {
     if (req.method === 'GET' && path === '/api/sessions') {
       if (!requireAuth(req, res)) return;
       const miniAppId = process.env.MINI_APP_ID ?? 'MINI_APP_ID';
-      const sessions = listSessions(db).map(session => ({
+      const sessions = (await listSessions()).map(session => ({
         ...session,
         qrPayload: buildSessionDeepLink(miniAppId, session.id),
       }));
@@ -242,7 +192,8 @@ export function createApp() {
     if (sessionAction) {
       const sessionId = decodeURIComponent(sessionAction[1]);
       const action = sessionAction[2];
-      const session = db.sessions.get(sessionId);
+      const { getSession } = await import('./services/session.service.js');
+      const session = await getSession(sessionId);
 
       if (action === 'public' && req.method === 'GET') {
         if (!session) {
@@ -265,19 +216,19 @@ export function createApp() {
       }
 
       if (action === 'close' && req.method === 'POST') {
-        persist();
+        
         sendJson(res, 200, {
           code: 'SUCCESS',
           message: 'Da dong phien.',
-          data: closeSession(db, sessionId),
+          data: await closeSession(sessionId),
         });
         return;
       }
 
       if (action === 'delete' && req.method === 'DELETE') {
         const { deleteSession } = await import('./services/session.service.js');
-        const deleted = deleteSession(db, sessionId);
-        if (deleted) persist();
+        const deleted = await deleteSession(sessionId);
+        if (deleted) 
         sendJson(res, 200, {
           code: 'SUCCESS',
           message: deleted ? 'Da xoa phien diem danh.' : 'Khong the xoa phien.',
@@ -287,10 +238,8 @@ export function createApp() {
       }
 
       if (action === 'attendances' && req.method === 'GET') {
-        const records = [...db.attendances.values()]
-          .filter((record) => record.sessionId === sessionId)
-          .sort((a, b) => a.checkedAt.localeCompare(b.checkedAt))
-          .map((record) => ({ ...record, ...(db.students.get(record.studentCode) ?? {}) }));
+        const { getSessionAttendances } = await import('./services/attendance.service.js');
+        const records = await getSessionAttendances(sessionId);
         sendJson(res, 200, {
           code: 'SUCCESS',
           message: 'OK',
@@ -299,12 +248,12 @@ export function createApp() {
         return;
       }
 
-      if (action === 'export' && req.method === 'GET') {
+            if (action === 'export' && req.method === 'GET') {
         const lines = ['MSSV,HoTen,Lop,ThoiGianCheckin,KhoangCach(m)'];
-        for (const record of [...db.attendances.values()]
-          .filter((r) => r.sessionId === sessionId)
-          .sort((a, b) => a.checkedAt.localeCompare(b.checkedAt))) {
-          const student = db.students.get(record.studentCode);
+        const { getSessionAttendances } = await import('./services/attendance.service.js');
+        const records = await getSessionAttendances(sessionId);
+        for (const record of records) {
+          const student = record;
           lines.push(
             [
               record.studentCode,
@@ -322,10 +271,8 @@ export function createApp() {
 
     if (req.method === 'GET' && path === '/api/attendances') {
       if (!requireAuth(req, res)) return;
-      const allAttendances = [...db.attendances.values()].map(a => ({
-        ...a,
-        ...(db.students.get(a.studentCode) ?? {})
-      }));
+      const { listAllAttendances } = await import('./services/attendance.service.js');
+      const allAttendances = await listAllAttendances();
       sendJson(res, 200, {
         code: 'SUCCESS',
         message: 'OK',
@@ -337,7 +284,8 @@ export function createApp() {
     // Tuong thich route cu GET /api/sessions/:id (public)
     if (req.method === 'GET' && path.startsWith('/api/sessions/')) {
       const id = decodeURIComponent(path.replace('/api/sessions/', ''));
-      const session = db.sessions.get(id);
+      const { getSession } = await import('./services/session.service.js');
+      const session = await getSession(id);
       if (!session) {
         sendJson(res, 404, { code: 'SESSION_CLOSED', message: 'Session not found', data: null });
         return;
@@ -375,13 +323,12 @@ export function createApp() {
           lat?: number;
           lng?: number;
         };
-        const result = checkIn(db, {
+        const result = await checkIn({
           sessionId: body.sessionId ?? '',
           studentCode: body.studentCode ?? '',
           lat: Number(body.lat),
           lng: Number(body.lng),
         });
-        if (result.code === 'SUCCESS') persist();
         const status = result.code === 'SUCCESS' || result.code === 'ALREADY_CHECKED' ? 200 : 400;
         sendJson(res, status, result);
       } catch {
