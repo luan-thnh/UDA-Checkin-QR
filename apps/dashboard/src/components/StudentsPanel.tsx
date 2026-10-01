@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import type { Student } from '@checkin/shared';
 import { downloadWithAuth, fetchStudents, importStudents } from '../services/api';
 import { readStudentRowsFromFile } from '../utils/excel';
-import { Search, Upload, Download, Filter, Info, Users, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Upload, Download, Filter, Info, Users, FileDown, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 
 export function StudentsPanel() {
   const [query, setQuery] = useState('');
@@ -178,6 +178,7 @@ export function StudentsPanel() {
                     <th className="table-th">Họ và tên</th>
                     <th className="table-th w-40">Lớp</th>
                     <th className="table-th w-64">Khoa</th>
+                    <th className="table-th w-24 text-right">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -191,6 +192,26 @@ export function StudentsPanel() {
                         </span>
                       </td>
                       <td className="table-td text-slate-500">{student.faculty || '-'}</td>
+                      <td className="table-td text-right">
+                        <button 
+                          onClick={async () => {
+                            if (!confirm(`Bạn có chắc muốn xóa sinh viên ${student.fullName} (${student.studentCode}) không?`)) return;
+                            try {
+                              const { deleteStudent } = await import('../services/api');
+                              await deleteStudent(student.studentCode);
+                              setNotice(`Đã xóa sinh viên ${student.studentCode}`);
+                              setNoticeError(false);
+                              void reload();
+                            } catch (e) {
+                              setNotice(e instanceof Error ? e.message : 'Lỗi xóa sinh viên');
+                              setNoticeError(true);
+                            }
+                          }}
+                          className="text-danger/70 hover:text-danger hover:bg-danger-tint p-1.5 rounded-md transition-colors" title="Xóa sinh viên"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -199,7 +220,28 @@ export function StudentsPanel() {
                 <span className="text-sm text-slate-500">
                   Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredStudents.length)} / {filteredStudents.length} sinh viên
                 </span>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  {selectedClass && (
+                    <button 
+                      onClick={async () => {
+                        if (!confirm(`CẢNH BÁO: Bạn có chắc muốn xóa TOÀN BỘ sinh viên lớp ${selectedClass} không? Thao tác này không thể hoàn tác!`)) return;
+                        try {
+                          const { deleteClass } = await import('../services/api');
+                          const res = await deleteClass(selectedClass);
+                          setNotice(`Đã xóa thành công ${res.deleted} sinh viên lớp ${selectedClass}`);
+                          setNoticeError(false);
+                          setSelectedClass('');
+                          void reload();
+                        } catch (e) {
+                          setNotice(e instanceof Error ? e.message : 'Lỗi xóa lớp');
+                          setNoticeError(true);
+                        }
+                      }}
+                      className="btn btn-ghost text-danger border border-danger/20 hover:bg-danger hover:text-white px-3 py-1 mr-4"
+                    >
+                      <Trash2 size={16} className="mr-1.5" /> Xóa lớp {selectedClass}
+                    </button>
+                  )}
                   <button 
                     disabled={currentPage === 1} 
                     onClick={() => setCurrentPage(p => p - 1)}

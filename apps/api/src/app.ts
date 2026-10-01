@@ -179,6 +179,32 @@ export function createApp() {
       return;
     }
 
+    if (req.method === 'DELETE' && path === '/api/students') {
+      if (!requireAuth(req, res)) return;
+      const className = url.searchParams.get('className');
+      if (className) {
+        const { deleteClass } = await import('./services/student.service.js');
+        const { deleted } = deleteClass(db, className);
+        persist();
+        sendJson(res, 200, { code: 'SUCCESS', message: `Da xoa ${deleted} sinh vien lop ${className}`, data: { deleted } });
+      } else {
+        sendJson(res, 400, { code: 'INVALID_INPUT', message: 'Thieu tham so className', data: null });
+      }
+      return;
+    }
+
+    if (req.method === 'DELETE' && path.startsWith('/api/students/')) {
+      if (!requireAuth(req, res)) return;
+      const studentCode = decodeURIComponent(path.replace('/api/students/', ''));
+      if (studentCode !== 'export' && studentCode !== 'import' && studentCode !== 'template') {
+        const { deleteStudent } = await import('./services/student.service.js');
+        const deleted = deleteStudent(db, studentCode);
+        if (deleted) persist();
+        sendJson(res, 200, { code: 'SUCCESS', message: deleted ? 'Da xoa sinh vien' : 'Khong tim thay sinh vien', data: { deleted } });
+        return;
+      }
+    }
+
     if (req.method === 'POST' && path === '/api/sessions') {
       if (!requireAuth(req, res)) return;
       try {
@@ -203,11 +229,16 @@ export function createApp() {
 
     if (req.method === 'GET' && path === '/api/sessions') {
       if (!requireAuth(req, res)) return;
-      sendJson(res, 200, { code: 'SUCCESS', message: 'OK', data: listSessions(db) });
+      const miniAppId = process.env.MINI_APP_ID ?? 'MINI_APP_ID';
+      const sessions = listSessions(db).map(session => ({
+        ...session,
+        qrPayload: buildSessionDeepLink(miniAppId, session.id),
+      }));
+      sendJson(res, 200, { code: 'SUCCESS', message: 'OK', data: sessions });
       return;
     }
 
-    const sessionAction = path.match(/^\/api\/sessions\/([^/]+)\/(public|attendances|export|close)$/);
+    const sessionAction = path.match(/^\/api\/sessions\/([^/]+)\/(public|attendances|export|close|delete)$/);
     if (sessionAction) {
       const sessionId = decodeURIComponent(sessionAction[1]);
       const action = sessionAction[2];
@@ -239,6 +270,18 @@ export function createApp() {
           code: 'SUCCESS',
           message: 'Da dong phien.',
           data: closeSession(db, sessionId),
+        });
+        return;
+      }
+
+      if (action === 'delete' && req.method === 'DELETE') {
+        const { deleteSession } = await import('./services/session.service.js');
+        const deleted = deleteSession(db, sessionId);
+        if (deleted) persist();
+        sendJson(res, 200, {
+          code: 'SUCCESS',
+          message: deleted ? 'Da xoa phien diem danh.' : 'Khong the xoa phien.',
+          data: { deleted },
         });
         return;
       }

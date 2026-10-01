@@ -80,6 +80,18 @@ export function closeSession(sessionId: string): Promise<CheckinSession> {
   return request(`/api/sessions/${encodeURIComponent(sessionId)}/close`, { method: 'POST' });
 }
 
+export function deleteSession(sessionId: string): Promise<{ deleted: boolean }> {
+  return request(`/api/sessions/${encodeURIComponent(sessionId)}/delete`, { method: 'DELETE' });
+}
+
+export function deleteStudent(studentCode: string): Promise<{ deleted: boolean }> {
+  return request(`/api/students/${encodeURIComponent(studentCode)}`, { method: 'DELETE' });
+}
+
+export function deleteClass(className: string): Promise<{ deleted: number }> {
+  return request(`/api/students?className=${encodeURIComponent(className)}`, { method: 'DELETE' });
+}
+
 export interface AttendanceListData {
   session: CheckinSession;
   total: number;

@@ -51,3 +51,7 @@ export function closeSession(db: MemoryDb, sessionId: string): CheckinSession {
   session.status = 'closed';
   return session;
 }
+
+export function deleteSession(db: MemoryDb, sessionId: string): boolean {
+  return db.sessions.delete(sessionId);
+}

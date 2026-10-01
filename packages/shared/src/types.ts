@@ -25,6 +25,7 @@ export interface CheckinSession {
   startsAt: string;
   endsAt: string;
   status: 'active' | 'closed';
+  qrPayload?: string;
 }
 
 export interface AttendanceRecord {

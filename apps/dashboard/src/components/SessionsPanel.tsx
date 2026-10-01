@@ -1,8 +1,8 @@
 import { Suspense, useEffect, useState, useMemo } from 'react';
-import type { CheckinSession, Student } from '@checkin/shared';
+import { buildSessionDeepLink, type CheckinSession, type Student } from '@checkin/shared';
 import { QRCodeSVG } from 'qrcode.react';
 import { closeSession, createSession, downloadWithAuth, fetchAttendances, fetchSessions, fetchStudents, type AttendanceListData, type CreatedSession } from '../services/api';
-import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users } from 'lucide-react';
+import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users, Trash2 } from 'lucide-react';
 
 export function SessionsPanel() {
   const [sessions, setSessions] = useState<CheckinSession[]>([]);
@@ -199,10 +199,25 @@ export function SessionsPanel() {
                     <Download size={16} className="mr-2" /> Xuất
                   </button>
                   {session.status === 'active' && (
-                    <button className="btn btn-ghost text-danger hover:bg-danger-tint" onClick={() => closeSession(session.id).then(() => void reload())}>
+                    <button className="btn btn-ghost text-slate-500 hover:bg-slate-100" onClick={() => closeSession(session.id).then(() => void reload())}>
                       <PowerOff size={16} className="mr-2" /> Đóng
                     </button>
                   )}
+                  <button 
+                    className="btn btn-ghost text-danger hover:bg-danger-tint" 
+                    onClick={async () => {
+                      if (!confirm(`Bạn có chắc muốn xóa vĩnh viễn phiên "${session.title}" không? Thao tác này sẽ xóa cả dữ liệu điểm danh của phiên này!`)) return;
+                      try {
+                        const { deleteSession } = await import('../services/api');
+                        await deleteSession(session.id);
+                        void reload();
+                      } catch (e) {
+                        alert(e instanceof Error ? e.message : 'Lỗi xóa phiên');
+                      }
+                    }}
+                  >
+                    <Trash2 size={16} className="mr-2" /> Xóa
+                  </button>
                 </div>
               </li>
             ))}
@@ -221,7 +236,10 @@ export function SessionsPanel() {
             <div className="p-8 flex flex-col items-center">
               <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
                 <Suspense fallback={<div className="w-64 h-64 bg-slate-100 animate-pulse rounded-lg"></div>}>
-                  <QRCodeSVG value={(qrSession as CreatedSession).qrPayload ?? `session=${qrSession.id}`} size={256} />
+                  <QRCodeSVG 
+                    value={qrSession.qrPayload ?? buildSessionDeepLink(import.meta.env.VITE_MINI_APP_ID || '4134446949382821265', qrSession.id)} 
+                    size={256} 
+                  />
                 </Suspense>
               </div>
               <p className="mt-6 text-sm text-slate-500 font-mono bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2">

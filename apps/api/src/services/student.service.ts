@@ -29,3 +29,19 @@ export function upsertStudents(db: MemoryDb, students: Student[]): { upserted: n
 function byStudentCode(a: Student, b: Student): number {
   return a.studentCode.localeCompare(b.studentCode);
 }
+
+export function deleteStudent(db: MemoryDb, studentCode: string): boolean {
+  const code = normalizeStudentCode(studentCode);
+  return db.students.delete(code);
+}
+
+export function deleteClass(db: MemoryDb, className: string): { deleted: number } {
+  let count = 0;
+  for (const [code, student] of db.students.entries()) {
+    if (student.className === className) {
+      db.students.delete(code);
+      count++;
+    }
+  }
+  return { deleted: count };
+}
