@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { clearToken, getToken } from './services/api';
 import { LoginForm } from './components/LoginForm';
 import { StudentsPanel } from './components/StudentsPanel';
@@ -86,7 +86,6 @@ function DashboardLayout({ onLogout }: { onLogout: () => void }) {
 
 export function DashboardApp() {
   const [authed, setAuthed] = useState(() => Boolean(getToken()));
-  const location = useLocation();
 
   if (!authed) return <LoginForm onDone={() => setAuthed(true)} />;
 
