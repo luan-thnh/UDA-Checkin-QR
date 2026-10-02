@@ -1,3 +1,4 @@
+import fpPromise from "@fingerprintjs/fingerprintjs";
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Navigate } from 'react-router-dom';
 import { MapPin, AlertTriangle, CheckCircle2, LogOut } from 'lucide-react';
@@ -48,6 +49,10 @@ export function PublicCheckin() {
   const [acc, setAcc] = useState<number | null>(null);
   const [geoStatus, setGeoStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
   const [geoError, setGeoError] = useState('');
+  const [deviceId, setDeviceId] = useState<string>("");
+  useEffect(() => {
+    fpPromise.load().then(fp => fp.get()).then(res => setDeviceId(res.visitorId));
+  }, []);
 
   useEffect(() => {
     if (!sessionId) {
@@ -110,7 +115,7 @@ export function PublicCheckin() {
     setSubmitting(true);
     setFormError('');
     try {
-      const res = await submitAttend({ sessionId, studentCode: code, lat, lng, accuracyM: acc || undefined });
+      const res = await submitAttend({ sessionId, studentCode: code, lat, lng, accuracyM: acc || undefined, deviceId });
       if (res.code === 'SUCCESS' || res.code === 'ALREADY_CHECKED') {
         localStorage.setItem(`checkedInSession_${sessionId}`, code);
         localStorage.setItem('lastStudentCode', code);

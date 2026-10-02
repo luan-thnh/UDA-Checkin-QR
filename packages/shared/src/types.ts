@@ -45,6 +45,7 @@ export interface AttendRequest {
   lat: number;
   lng: number;
   accuracyM?: number;
+  deviceId?: string;
 }
 
 export interface ApiResponse<T> {

@@ -44,14 +44,29 @@ export async function checkIn(input: AttendRequest): Promise<ApiResponse<AttendS
     return fail('SESSION_CLOSED', 'Phien diem danh da dong hoac het han.');
   }
 
-  // 2. Get student
+  // 2. Anti-cheat check: Device ID
+  if (input.deviceId) {
+    const { data: existingDevice } = await supabase
+      .from('attendances')
+      .select('student_code')
+      .eq('session_id', sessionId)
+      .eq('device_id', input.deviceId)
+      .neq('student_code', normalizeStudentCode(rawCode))
+      .limit(1);
+
+    if (existingDevice && existingDevice.length > 0) {
+      return fail('INVALID_INPUT', `Phát hiện gian lận: Thiết bị này đã điểm danh cho sinh viên khác (${existingDevice[0].student_code})!`);
+    }
+  }
+
+  // 3. Get student
   const studentCode = normalizeStudentCode(rawCode);
   const { data: student, error: studentErr } = await supabase.from('students').select('*').eq('student_code', studentCode).single();
   if (studentErr || !student) {
     return fail('STUDENT_NOT_FOUND', `MSSV ${studentCode} khong co trong danh sach.`);
   }
 
-  // 3. Distance check
+  // 4. Distance check
   const distanceM = haversineMeters(input.lat, input.lng, session.lat_center, session.lng_center);
   const inside = isWithinRadius(input.lat, input.lng, session.lat_center, session.lng_center, session.radius_m);
   if (!inside) {
@@ -91,6 +106,7 @@ export async function checkIn(input: AttendRequest): Promise<ApiResponse<AttendS
     distance_m: Math.round(distanceM),
     lat: input.lat,
     lng: input.lng,
+    device_id: input.deviceId ?? null,
   };
   
   const { error: insertErr } = await supabase.from('attendances').insert(record);
