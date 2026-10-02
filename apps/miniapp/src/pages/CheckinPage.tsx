@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from 'zmp-sdk';
-import { Button, Header, Input, Page, Spinner, Icon, useNavigate } from 'zmp-ui';
+import { Button, Header, Page, Spinner, Icon, useNavigate } from 'zmp-ui';
 import {
   parseSessionIdFromQuery,
   validateAttendForm,
@@ -46,21 +46,20 @@ export function CheckinPage() {
   const [alreadyCheckedInLocal, setAlreadyCheckedInLocal] = useState(false);
   const { fix, status, errorMessage, requestLocation } = useCheckinLocation();
   
-  const [manualSessionCode, setManualSessionCode] = useState('');
+  const [manualCode, setManualCode] = useState('');
 
   useEffect(() => {
     if (!sessionId) {
-      setSessionError('Vui lòng quét mã QR hoặc nhập mã phiên do Giảng viên cung cấp.');
+      setSessionError('NO_SESSION');
       return;
     }
-    
-    setSessionError(''); // Clear old error
-
+    setSessionError('');
     if (localStorage.getItem(`checkin_${sessionId}`)) {
       setAlreadyCheckedInLocal(true);
     }
-    
-    getSessionPublic(sessionId).then(setSession).catch((error: Error) => setSessionError(error.message));
+    getSessionPublic(sessionId)
+      .then(setSession)
+      .catch((error: Error) => setSessionError(error.message));
   }, [sessionId]);
 
   useEffect(() => {
@@ -81,7 +80,8 @@ export function CheckinPage() {
     if (session.status !== 'active') return 'Phiên đã đóng';
     if (status === 'error') return 'Chưa cấp quyền vị trí';
     if (!fix) return 'Đang lấy vị trí...';
-    if (distanceM !== null && distanceM > session.radiusM) return `Quá xa (${Math.round(distanceM)}m > ${session.radiusM}m)`;
+    if (distanceM !== null && distanceM > session.radiusM)
+      return `Quá xa (${Math.round(distanceM)}m)`;
     return null;
   }, [session, status, fix, distanceM]);
 
@@ -102,7 +102,6 @@ export function CheckinPage() {
     if (!fix || !session) return;
     setSubmitting(true);
     setResult(null);
-
     try {
       const res = await submitAttend({
         sessionId: session.id,
@@ -124,197 +123,267 @@ export function CheckinPage() {
   }
 
   function handleBack() {
-    if (window.history.length <= 1) {
+    if (sessionId) {
+      setSessionId('');
+      setSession(null);
+      setSessionError('NO_SESSION');
+      setResult(null);
+      setAlreadyCheckedInLocal(false);
+      navigate('/', { replace: true });
+    } else if (window.history.length <= 1) {
       api.closeApp({});
     } else {
       navigate(-1);
     }
   }
 
+  function handleScanQR() {
+    try {
+      api.scanQRCode({
+        success: (data) => {
+          const content = data?.content;
+          if (!content) return;
+          let newSessionId = '';
+          try {
+            const url = new URL(content);
+            newSessionId = url.searchParams.get('session') || '';
+          } catch {
+            if (content.includes('session=')) {
+              newSessionId = content.split('session=')[1].split('&')[0];
+            } else {
+              newSessionId = content;
+            }
+          }
+          if (newSessionId) {
+            setSessionId(newSessionId);
+            navigate(`/?session=${encodeURIComponent(newSessionId)}`, { replace: true });
+          } else {
+            alert('Mã QR không hợp lệ.');
+          }
+        },
+        fail: () => alert('Lỗi quét QR.'),
+      });
+    } catch {
+      alert('Không thể mở Camera.');
+    }
+  }
+
+  function goToSession(code: string) {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return;
+    setSessionId(trimmed);
+    navigate(`/?session=${encodeURIComponent(trimmed)}`, { replace: true });
+  }
+
+  /* ==========================================
+     HOME SCREEN — no session
+     ========================================== */
   if (!sessionId) {
     return (
       <Page className="page">
-        <Header title="Điểm danh UDA" onBackClick={handleBack} />
-        <div className="empty-state ci-wrap">
-          <div className="icon-wrapper" style={{ margin: '40px auto 24px' }}>
-            <Icon icon="zi-qrline" size={48} style={{ color: 'var(--primary)' }} />
+        <Header title="UDA Check In" showBackIcon={false} />
+        <div className="home-screen">
+          <div className="home-logo">
+            <Icon icon="zi-note" size={36} style={{ color: 'white' }} />
+            <span className="badge"><Icon icon="zi-check-circle-solid" size={18} /></span>
           </div>
-          <h2 style={{ marginBottom: 12 }}>Bắt đầu điểm danh</h2>
-          <p style={{ color: 'var(--muted)', marginBottom: 32, fontSize: 15 }}>
-            Quét mã QR từ màn hình của Giảng viên để tiếp tục.
+
+          <div className="home-pill">
+            <Icon icon="zi-star-solid" size={14} /> Hệ thống Điểm danh UDA
+          </div>
+
+          <h1 className="home-title">Điểm danh sinh viên</h1>
+          <p className="home-desc">
+            Quét mã QR hoặc nhập mã điểm danh<br/>để bắt đầu tiết học
           </p>
-          <Button
-            className="btn-submit"
-            fullWidth
-            onClick={() => {
-              try {
-                api.scanQRCode({
-                  success: (data) => {
-                    const content = data?.content;
-                    if (content) {
-                      let newSessionId = '';
-                      try {
-                        const url = new URL(content);
-                        newSessionId = url.searchParams.get('session') || '';
-                      } catch {
-                        if (content.includes('session=')) {
-                          newSessionId = content.split('session=')[1].split('&')[0];
-                        } else {
-                          newSessionId = content;
-                        }
-                      }
-                      
-                      if (newSessionId) {
-                        setSessionId(newSessionId);
-                        navigate(`/?session=${encodeURIComponent(newSessionId)}`, { replace: true });
-                      } else {
-                        alert('Mã QR không hợp lệ. Nội dung: ' + content);
-                      }
-                    }
-                  },
-                  fail: (error) => {
-                    alert('Lỗi quét QR: ' + JSON.stringify(error));
-                  },
-                });
-              } catch (e) {
-                alert('Không thể mở Camera.');
-              }
-            }}
-          >
-            Quét mã QR ngay
+
+          <Button className="btn-scan" onClick={handleScanQR}>
+            <Icon icon="zi-qrline" size={22} />
+            QUÉT MÃ QR
           </Button>
-          
-          <div style={{ marginTop: 40, borderTop: '1px solid var(--line)', paddingTop: 24, width: '100%', textAlign: 'left' }}>
-            <p style={{ color: 'var(--muted)', marginBottom: 16, fontSize: 14, fontWeight: 500 }}>Hoặc nhập mã phiên bằng tay:</p>
-            <Input
-              type="text"
-              placeholder="VD: SS-MUP6ILIE"
-              value={manualSessionCode}
-              onChange={(e) => setManualSessionCode(e.target.value.toUpperCase())}
-              clearable
-              style={{ marginBottom: 16 }}
-            />
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={() => {
-                if (manualSessionCode.trim()) {
-                  const code = manualSessionCode.trim().toUpperCase();
-                  setSessionId(code);
-                  navigate(`/?session=${encodeURIComponent(code)}`, { replace: true });
-                }
-              }}
-            >
-              Vào điểm danh
-            </Button>
+
+          <div className="home-divider">hoặc</div>
+
+          <div className="manual-card">
+            <div className="manual-card-header">
+              <span className="label">Mã điểm danh</span>
+              <span className="hint">Mã phiên từ giảng viên</span>
+            </div>
+            <div className="manual-input-row">
+              <input
+                type="text"
+                placeholder="VD: SS-MUP6ILIE"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && goToSession(manualCode)}
+              />
+              <Button className="btn-go" onClick={() => goToSession(manualCode)}>
+                Tiếp tục →
+              </Button>
+            </div>
+            <div className="manual-hint">
+              <Icon icon="zi-info-circle" size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span>Nhập mã phiên nếu không thể quét camera.</span>
+            </div>
+          </div>
+
+          <div className="home-footer">
+            <div className="home-footer-dot">
+              <Icon icon="zi-check-circle" size={22} />
+            </div>
+            <div>
+              <h4>Cổng điểm danh đang mở</h4>
+              <p>Đại học Đông Á (UDA)</p>
+            </div>
+            <div className="pulse-green" />
+          </div>
+
+          <div className="home-credit">
+            Trung tâm Đào tạo &amp; Khảo thí<br/>
+            Đại học Đông Á • Zalo Mini App
           </div>
         </div>
       </Page>
     );
   }
 
+  /* ==========================================
+     SESSION SCREEN — has sessionId
+     ========================================== */
   return (
     <Page className="page">
-      <Header title="Điểm danh sinh viên" onBackClick={handleBack} />
+      <Header title="Điểm danh" onBackClick={handleBack} />
       <div className="ci-wrap">
-        {!session && !sessionError ? (
-          <div className="loading-state">
+        {/* Loading */}
+        {!session && !sessionError && (
+          <div className="loading-center">
             <Spinner visible />
             <span>Đang tải thông tin phiên...</span>
           </div>
-        ) : null}
-        
-        {sessionError && sessionId ? (
-          <div className="ci-result fail">
-            <div className="icon-wrapper-small">
-              <Icon icon="zi-warning-solid" size={32} style={{ color: 'var(--danger)' }} />
-            </div>
-            <h3>Lỗi tải dữ liệu</h3>
-            <p style={{ wordBreak: 'break-word', margin: '12px 0', fontSize: 14 }}>{sessionError}</p>
-            <Button size="small" variant="secondary" onClick={() => { setSessionId(''); navigate('/', { replace: true }); }}>Thử mã khác</Button>
-          </div>
-        ) : null}
+        )}
 
-        {session ? (
-          <div className="ci-session">
-            <div className="ci-session-bg"></div>
-            <div className="ci-session-content">
-              <h2>{session.title}</h2>
-              <div className="subject">
-                <Icon icon="zi-bookmark" size={16} style={{ marginRight: 6 }} /> {session.subject}
-              </div>
-              <div className="time-info">
-                <Icon icon="zi-clock-1" size={16} /> 
-                <span>Đến {new Date(session.endsAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
-              </div>
+        {/* Error */}
+        {sessionError && sessionError !== 'NO_SESSION' && (
+          <div className="error-card">
+            <div className="error-card-header">
+              <Icon icon="zi-warning-solid" size={22} />
+              <h3>Lỗi tải dữ liệu</h3>
+            </div>
+            <p>{sessionError}</p>
+            <Button size="small" onClick={handleBack}>← Quay lại</Button>
+          </div>
+        )}
+
+        {/* Session Info */}
+        {session && (
+          <div className="card">
+            <div className="session-header">
+              <span className="session-tag">
+                #{session.id.slice(-6)}
+              </span>
+              <span className="session-status">
+                {session.status === 'active' ? 'Đang mở' : 'Đã đóng'}
+              </span>
+            </div>
+            <h2>{session.title}</h2>
+            <div className="session-meta">
+              <span>
+                <Icon icon="zi-clock-1" size={15} style={{ color: 'var(--primary)' }} />
+                Đến {new Date(session.endsAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <span>
+                <Icon icon="zi-location" size={15} style={{ color: 'var(--primary)' }} />
+                {session.subject || 'Phòng học'}
+              </span>
             </div>
           </div>
-        ) : null}
+        )}
 
-        {session ? (
-          <div className="ci-card">
-            <div className="ci-gps">
-              <Icon icon="zi-location-solid" size={24} style={{ color: 'var(--primary)' }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 16, marginBottom: 4 }}>Vị trí của bạn</div>
-                <div className="distance-text">
-                  {status === 'ok' && fix
-                    ? distanceM !== null
-                      ? <span className={distanceM <= session.radiusM ? 'text-green' : 'text-red'}>Cách điểm danh {Math.round(distanceM)}m</span>
-                      : 'Đang tính toán...'
-                    : status === 'error'
-                    ? <span className="text-red">Bị từ chối (Chưa cấp quyền)</span>
-                    : errorMessage || 'Đang chờ vị trí...'}
-                </div>
+        {/* GPS */}
+        {session && (
+          <div className="card gps-row">
+            <div className={`gps-icon ${status === 'ok' ? '' : 'error'}`}>
+              <Icon icon={status === 'ok' ? 'zi-check' : 'zi-close'} size={24} />
+            </div>
+            <div className="gps-body">
+              <h4 className="gps-title">
+                {status === 'ok' && fix ? 'Đã xác định vị trí' : 'Chưa có vị trí'}
+                <span className={`gps-badge ${status === 'ok' ? '' : 'error'}`}>
+                  GPS {status === 'ok' ? 'OK' : '...'}
+                </span>
+              </h4>
+              <p className="gps-desc">
+                {status === 'ok' && fix
+                  ? distanceM !== null
+                    ? distanceM <= session.radiusM
+                      ? `Hợp lệ — cách điểm danh ${Math.round(distanceM)}m.`
+                      : `Ngoài vùng — cách ${Math.round(distanceM)}m (tối đa ${session.radiusM}m).`
+                    : 'Đang tính toán...'
+                  : status === 'error'
+                  ? 'Không lấy được vị trí. Vui lòng cấp quyền.'
+                  : errorMessage || 'Đang chờ vị trí...'}
+              </p>
+              <div className="gps-source">
+                <Icon icon="zi-shield-solid" size={12} /> Zalo Location API
               </div>
-              {status !== 'ok' ? (
-                <Button size="small" onClick={requestLocation} variant="secondary">Cấp quyền</Button>
-              ) : null}
+              {status !== 'ok' && (
+                <Button size="small" onClick={requestLocation} style={{ marginTop: 10 }}>
+                  Cấp quyền vị trí
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Form / Result */}
+        {session && (
+          <div className="card form-card">
+            <div className="form-header">
+              <span>Mã sinh viên</span>
+              <span style={{ color: 'var(--primary)' }}>
+                <Icon icon="zi-edit-text" size={12} /> Nhập tay
+              </span>
             </div>
 
             {result ? (
-              <div style={{ marginTop: 24 }}>
-                <StatusCard 
-                  code={result.code} 
-                  message={result.message} 
-                  checkedAt={result.data?.attendance?.checkedAt}
-                />
-              </div>
+              <StatusCard
+                code={result.code}
+                message={result.message}
+                checkedAt={result.data?.attendance?.checkedAt}
+              />
+            ) : alreadyCheckedInLocal ? (
+              <StatusCard code="ALREADY_CHECKED" message="Bạn đã check-in thành công trên thiết bị này." />
             ) : (
-              <div style={{ marginTop: 24 }}>
-                {alreadyCheckedInLocal ? (
-                  <StatusCard code="ALREADY_CHECKED" message="Bạn đã check-in thành công trên thiết bị này." />
-                ) : (
-                  <>
-                    <div style={{ marginBottom: 24 }}>
-                      <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: 15 }}>Mã số sinh viên (MSSV)</label>
-                      <Input
-                        type="text"
-                        placeholder="Nhập MSSV của bạn (vd: 205053120)"
-                        value={studentCode}
-                        onChange={(e) => handleCodeChange(e.target.value)}
-                        errorText={formError}
-                        status={formError ? 'error' : ''}
-                        clearable
-                        disabled={submitting}
-                      />
+              <>
+                <div className="student-input">
+                  <input
+                    type="text"
+                    placeholder="Nhập MSSV..."
+                    value={studentCode}
+                    onChange={(e) => handleCodeChange(e.target.value)}
+                    disabled={submitting}
+                  />
+                  {studentCode && (
+                    <div className="clear-btn" onClick={() => handleCodeChange('')}>
+                      <Icon icon="zi-close-circle" size={18} />
                     </div>
-                    
-                    <Button
-                      className="btn-submit"
-                      fullWidth
-                      loading={submitting}
-                      disabled={!canSubmit || !studentCode.trim()}
-                      onClick={handleSubmit}
-                    >
-                      {blockReason || 'Xác nhận điểm danh'}
-                    </Button>
-                  </>
-                )}
-              </div>
+                  )}
+                </div>
+                {formError && <div className="form-error">{formError}</div>}
+
+                <Button
+                  className="btn-submit"
+                  loading={submitting}
+                  disabled={!canSubmit || !studentCode.trim()}
+                  onClick={handleSubmit}
+                >
+                  <Icon icon="zi-check-circle" size={18} />
+                  {blockReason || 'ĐIỂM DANH NGAY'}
+                </Button>
+              </>
             )}
           </div>
-        ) : null}
+        )}
       </div>
     </Page>
   );

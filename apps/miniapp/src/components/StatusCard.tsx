@@ -38,18 +38,18 @@ export function StatusCard({ code, message, checkedAt }: Props) {
   const type = CLASS_BY_CODE[code];
   
   let iconColor = 'var(--primary-deep)';
-  if (type === 'warn') iconColor = '#c2410c';
+  if (type === 'warn') iconColor = '#B45309';
   if (type === 'fail') iconColor = 'var(--danger)';
 
   return (
-    <div className={`ci-result ${type}`}>
-      <div className="icon-wrapper-small">
-        <Icon icon={ICON_BY_CODE[code] as any} size={32} style={{ color: iconColor }} />
+    <div className={`result-card ${type}`}>
+      <div className="result-icon">
+        <Icon icon={ICON_BY_CODE[code] as any} size={36} style={{ color: iconColor }} />
       </div>
       <h3>{TITLE_BY_CODE[code]}</h3>
       <p>{message}</p>
       {checkedAt ? (
-        <p style={{ fontSize: 13, marginTop: 8, color: 'var(--muted)' }}>
+        <p style={{ fontSize: 12, marginTop: 8, color: 'var(--muted)' }}>
           Giờ check-in: {new Date(checkedAt).toLocaleString('vi-VN')}
         </p>
       ) : null}
