@@ -3,6 +3,7 @@ import { buildSessionDeepLink, type CheckinSession, type Student } from '@checki
 import { QRCodeSVG } from 'qrcode.react';
 import { closeSession, createSession, downloadWithAuth, fetchAttendances, fetchSessions, fetchStudents, type AttendanceListData, type CreatedSession } from '../services/api';
 import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users, Trash2 } from 'lucide-react';
+import { MapModal } from './MapModal';
 
 function todayLabel(): string {
   const d = new Date();
@@ -29,6 +30,7 @@ export function SessionsPanel() {
   const [qrSession, setQrSession] = useState<CreatedSession | CheckinSession | null>(null);
   const [detail, setDetail] = useState<AttendanceListData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   async function reload() {
     setLoading(true);
@@ -65,19 +67,28 @@ export function SessionsPanel() {
     return map;
   }, [sessions]);
 
+  const allKnownSubjects = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of sessions) if (s.subject) set.add(s.subject);
+    return Array.from(set).sort();
+  }, [sessions]);
+
   const subjectsForSelectedClass = useMemo(() => {
-    if (!className) return [];
-    return Array.from(subjectsByClass.get(className) ?? []).sort();
-  }, [className, subjectsByClass]);
+    if (!className) return allKnownSubjects;
+    const mapped = Array.from(subjectsByClass.get(className) ?? []);
+    return mapped.length > 0 ? mapped.sort() : allKnownSubjects;
+  }, [className, subjectsByClass, allKnownSubjects]);
+
+
 
   // When class changes, auto-fill subject if there's exactly one known subject
   const handleClassChange = useCallback((cls: string) => {
     setClassName(cls);
     const known = Array.from(subjectsByClass.get(cls) ?? []);
-    if (known.length === 1) {
+    if (known.length > 0) {
       setSubject(known[0]);
-    } else if (known.length === 0) {
-      setSubject('');
+    } else {
+      setSubject(''); // Let user pick from allKnownSubjects or add custom
     }
   }, [subjectsByClass]);
 
@@ -147,28 +158,33 @@ export function SessionsPanel() {
             </div>
             <div className="lg:col-span-2">
               <label className="label">Môn học</label>
-              {subjectsForSelectedClass.length > 0 ? (
-                <div className="flex gap-2">
-                  <select className="input bg-white appearance-none flex-1" value={subject} onChange={(e) => setSubject(e.target.value)}>
-                    <option value="">-- Chọn môn --</option>
-                    {subjectsForSelectedClass.map(s => <option key={s} value={s}>{s}</option>)}
-                    <option value="__custom__">+ Nhập môn mới...</option>
-                  </select>
-                  {subject === '__custom__' && (
-                    <input className="input flex-1" placeholder="Nhập tên môn học mới" value="" onChange={(e) => setSubject(e.target.value)} autoFocus />
-                  )}
-                </div>
-              ) : (
-                <input className="input" placeholder="VD: Lập trình Web" value={subject} onChange={(e) => setSubject(e.target.value)} />
-              )}
+              <div className="flex gap-2">
+                <select className="input bg-white appearance-none flex-1" value={subjectsForSelectedClass.includes(subject) ? subject : (subject === '' ? '' : '__custom__')} onChange={(e) => setSubject(e.target.value === '__custom__' ? '' : e.target.value)}>
+                  <option value="">-- Chọn môn --</option>
+                  {subjectsForSelectedClass.map(s => <option key={s} value={s}>{s}</option>)}
+                  <option value="__custom__">+ Nhập môn mới...</option>
+                </select>
+                {(!subjectsForSelectedClass.includes(subject) && subject !== '') || !subjectsForSelectedClass.includes(subject) ? (
+                  <input className="input flex-1" placeholder="Nhập tên môn học mới" value={subject} onChange={(e) => setSubject(e.target.value)} />
+                ) : null}
+              </div>
             </div>
-            <div>
-              <label className="label">Vĩ độ (Lat)</label>
-              <input required type="number" step="any" className="input font-mono" value={lat} onChange={(e) => setLat(e.target.value)} />
-            </div>
-            <div>
-              <label className="label">Kinh độ (Lng)</label>
-              <input required type="number" step="any" className="input font-mono" value={lng} onChange={(e) => setLng(e.target.value)} />
+            <div className="lg:col-span-3 flex flex-col sm:flex-row gap-5 items-end">
+              <div className="flex-1 w-full">
+                <label className="label">Vĩ độ (Lat)</label>
+                <input required type="number" step="any" className="input font-mono" value={lat} onChange={(e) => setLat(e.target.value)} />
+              </div>
+              <div className="flex-1 w-full">
+                <label className="label">Kinh độ (Lng)</label>
+                <input required type="number" step="any" className="input font-mono" value={lng} onChange={(e) => setLng(e.target.value)} />
+              </div>
+              <button 
+                type="button" 
+                className="btn btn-outline text-slate-700 bg-white whitespace-nowrap h-[42px]"
+                onClick={() => setShowMap(true)}
+              >
+                <MapPin size={16} className="mr-2 text-primary" /> Chọn trên bản đồ
+              </button>
             </div>
             <div>
               <label className="label">Bán kính (mét)</label>
@@ -344,6 +360,18 @@ export function SessionsPanel() {
             </div>
           </div>
         </div>
+      )}
+
+      {showMap && (
+        <MapModal
+          initialLat={Number(lat) || 16.0319}
+          initialLng={Number(lng) || 108.2205}
+          onConfirm={(newLat, newLng) => {
+            setLat(newLat.toString());
+            setLng(newLng.toString());
+          }}
+          onClose={() => setShowMap(false)}
+        />
       )}
     </div>
   );
