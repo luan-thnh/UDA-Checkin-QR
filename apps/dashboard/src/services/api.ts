@@ -128,3 +128,7 @@ export async function deleteAttendance(sessionId: string, studentCode: string): 
     method: "DELETE"
   });
 }
+
+export async function checkDevice(sessionId: string, deviceId: string): Promise<{ studentCode: string } | null> {
+  return request(`/api/attendances/check-device?session=${encodeURIComponent(sessionId)}&device=${encodeURIComponent(deviceId)}`);
+}

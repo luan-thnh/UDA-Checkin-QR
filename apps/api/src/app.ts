@@ -281,6 +281,16 @@ export function createApp() {
       }
     }
 
+    if (req.method === "GET" && path === "/api/attendances/check-device") {
+      const sId = url.searchParams.get("session");
+      const dId = url.searchParams.get("device");
+      if (!sId || !dId) { sendJson(res, 400, { code: "INVALID_INPUT", message: "Missing params" }); return; }
+      const { checkDeviceAttendance } = await import("./services/attendance.service.js");
+      const check = await checkDeviceAttendance(sId, dId);
+      sendJson(res, 200, { code: "SUCCESS", message: "OK", data: check });
+      return;
+    }
+
     if (req.method === 'GET' && path === '/api/attendances') {
       if (!requireAuth(req, res)) return;
       const { listAllAttendances } = await import('./services/attendance.service.js');

@@ -196,3 +196,10 @@ export async function deleteAttendance(sessionId: string, studentCode: string): 
   const { error } = await supabase.from("attendances").delete().eq("session_id", sessionId).eq("student_code", studentCode);
   return !error;
 }
+
+export async function checkDeviceAttendance(sessionId: string, deviceId: string): Promise<{ studentCode: string } | null> {
+  if (!supabase) return null;
+  const { data } = await supabase.from("attendances").select("student_code").eq("session_id", sessionId).eq("device_id", deviceId).limit(1);
+  if (data && data.length > 0) return { studentCode: data[0].student_code };
+  return null;
+}

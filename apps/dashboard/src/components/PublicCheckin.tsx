@@ -17,6 +17,12 @@ async function getSessionPublic(id: string): Promise<CheckinSession> {
   return data.data;
 }
 
+async function checkDeviceDB(sessionId: string, deviceId: string) {
+  const res = await fetch(`${apiBase()}/api/attendances/check-device?session=${sessionId}&device=${deviceId}`);
+  const data = await res.json();
+  return data.data;
+}
+
 async function submitAttend(payload: any): Promise<ApiResponse<AttendSuccessData>> {
   const res = await fetch(`${apiBase()}/api/attend`, {
     method: 'POST',
@@ -51,8 +57,31 @@ export function PublicCheckin() {
   const [geoError, setGeoError] = useState('');
   const [deviceId, setDeviceId] = useState<string>("");
   useEffect(() => {
-    fpPromise.load().then(fp => fp.get()).then(res => setDeviceId(res.visitorId));
-  }, []);
+    if (!sessionId) return;
+    fpPromise.load().then(fp => fp.get()).then(async res => {
+      setDeviceId(res.visitorId);
+      // Khi đã có Device ID, lập tức hỏi Server xem thiết bị này đã điểm danh trong session này chưa!
+      try {
+        const deviceRecord = await checkDeviceDB(sessionId, res.visitorId);
+        if (deviceRecord && deviceRecord.studentCode) {
+          // Bắt được thiết bị này đã điểm danh! Chặn hiển thị ô nhập luôn.
+          setAlreadyCheckedInLocal(true);
+          setResult({
+            code: 'ALREADY_CHECKED',
+            message: 'Thiết bị này đã điểm danh',
+            data: {
+              session_id: sessionId,
+              student_code: deviceRecord.studentCode,
+              distance_m: 0,
+              checked_at: new Date().toISOString()
+            } as any
+          });
+        }
+      } catch (err) {
+        console.error("Lỗi kiểm tra thiết bị:", err);
+      }
+    });
+  }, [sessionId]);
 
   useEffect(() => {
     if (!sessionId) {
