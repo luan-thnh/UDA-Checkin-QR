@@ -94,6 +94,19 @@ export function createApp() {
 
     if (req.method === 'GET' && path === '/api/students') {
       if (!requireAuth(req, res)) return;
+      const action = url.searchParams.get('action');
+      
+      if (action === 'template') {
+        const header = 'MSSV,HoTen,Lop,MonHoc,Khoa,Email\nSV001,Nguyen Van A,IT01,Lap trinh Web,CNTT,nva@example.com\nSV002,Tran Thi B,IT01,Lap trinh Web,CNTT,ttb@example.com';
+        sendCsv(res, 'template-danh-sach.csv', header);
+        return;
+      }
+      
+      if (action === 'export') {
+        sendCsv(res, 'danh-sach-sinh-vien.csv', studentsToCsv(await listStudents('')));
+        return;
+      }
+
       sendJson(res, 200, {
         code: 'SUCCESS',
         message: 'OK',
@@ -116,18 +129,7 @@ export function createApp() {
       return;
     }
 
-    if (req.method === 'GET' && path === '/api/students/template') {
-      if (!requireAuth(req, res)) return;
-      const header = 'MSSV,HoTen,Lop,MonHoc,Khoa,Email\nSV001,Nguyen Van A,IT01,Lap trinh Web,CNTT,nva@example.com\nSV002,Tran Thi B,IT01,Lap trinh Web,CNTT,ttb@example.com';
-      sendCsv(res, 'template-danh-sach-sinh-vien.csv', header);
-      return;
-    }
 
-    if (req.method === 'GET' && path === '/api/students/export') {
-      if (!requireAuth(req, res)) return;
-      sendCsv(res, 'danh-sach-sinh-vien.csv', studentsToCsv(await listStudents('')));
-      return;
-    }
 
     if (req.method === 'DELETE' && path === '/api/students') {
       if (!requireAuth(req, res)) return;
