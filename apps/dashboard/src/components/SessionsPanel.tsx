@@ -110,9 +110,15 @@ export function SessionsPanel() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
                     <h4 className="font-bold text-slate-800 text-lg">{session.title}</h4>
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${session.status === 'active' ? 'bg-accent-tint text-accent border border-accent/20' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
-                      {session.status === 'active' ? 'Đang mở' : 'Đã đóng'}
-                    </span>
+                    {(() => {
+                      const isExpired = session.endsAt && !isNaN(new Date(session.endsAt).getTime()) && new Date(session.endsAt) < new Date();
+                      const isActive = session.status === 'active' && !isExpired;
+                      return (
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${isActive ? 'bg-accent-tint text-accent border border-accent/20' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
+                          {isActive ? 'Đang mở' : 'Đã đóng'}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500 mt-2">
                     {session.className && (
@@ -122,7 +128,14 @@ export function SessionsPanel() {
                       <span className="flex items-center gap-1.5"><List size={14} /> Môn: <strong className="text-slate-700">{session.subject}</strong></span>
                     )}
                     <span className="flex items-center gap-1.5"><MapPin size={14} /> {session.radiusM}m</span>
-                    <span className="flex items-center gap-1.5"><Clock size={14} /> Hết hạn: {new Date(session.endsAt).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})} {new Date(session.endsAt).toLocaleDateString('vi-VN')}</span>
+                    <span className="flex items-center gap-1.5">
+                      <Clock size={14} /> 
+                      {session.endsAt && !isNaN(new Date(session.endsAt).getTime()) ? (
+                        <>Hết hạn: {new Date(session.endsAt).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})} {new Date(session.endsAt).toLocaleDateString('vi-VN')}</>
+                      ) : (
+                        <>Không rõ thời hạn</>
+                      )}
+                    </span>
                   </div>
                 </div>
                 

@@ -199,7 +199,9 @@ export function ReportsPanel() {
                         {session.title}
                       </div>
                       <div className="text-[10px] text-slate-400 mt-0.5">
-                        {new Date(session.startsAt).toLocaleDateString('vi-VN')}
+                        {session.startsAt && !isNaN(new Date(session.startsAt).getTime()) 
+                          ? new Date(session.startsAt).toLocaleDateString('vi-VN') 
+                          : ''}
                       </div>
                     </th>
                   ))}
