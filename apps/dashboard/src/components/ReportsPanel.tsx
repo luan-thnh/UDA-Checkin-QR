@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import type { Student, CheckinSession } from '@checkin/shared';
 import { fetchStudents, fetchSessions, fetchAllAttendances, deleteAttendance } from '../services/api';
 import { toast } from "sonner";
-import { Search, Filter, CalendarDays, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, CalendarDays, CheckCircle2, XCircle, ChevronLeft, ChevronRight, FileSpreadsheet } from 'lucide-react';
 
 export function ReportsPanel() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -90,6 +90,48 @@ export function ReportsPanel() {
     return map;
   }, [attendances]);
   
+
+  const handleExport = async () => {
+    if (filteredStudents.length === 0) {
+      toast.error('Không có dữ liệu để xuất');
+      return;
+    }
+    const { utils, writeFile } = await import('xlsx');
+    
+    // Prepare headers
+    const headers = ['MSSV', 'Họ và tên', 'Lớp'];
+    filteredSessions.forEach(session => {
+      const dateStr = session.startsAt ? new Date(session.startsAt).toLocaleDateString('vi-VN') : session.title;
+      headers.push(dateStr);
+    });
+    headers.push('Tổng');
+
+    // Prepare rows
+    const rows = filteredStudents.map(student => {
+      let presentCount = 0;
+      const row = [student.studentCode, student.fullName, student.className];
+      
+      filteredSessions.forEach(session => {
+        const att = attendanceMap.get(`${student.studentCode}_${session.id}`);
+        if (att) {
+          presentCount++;
+          row.push('x');
+        } else {
+          row.push('');
+        }
+      });
+      row.push(`${presentCount}/${filteredSessions.length}`);
+      return row;
+    });
+
+    const worksheet = utils.aoa_to_sheet([headers, ...rows]);
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, 'BaoCao');
+    
+    const fileName = `Bao_cao_${selectedClass || 'Tat_ca'}_${selectedSubject || 'Tat_ca'}.xlsx`;
+    writeFile(workbook, fileName);
+  };
+
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage) || 1;
   const paginatedStudents = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -111,6 +153,9 @@ export function ReportsPanel() {
           <h2 className="text-2xl font-bold text-slate-800">Báo cáo lịch sử điểm danh</h2>
           <p className="text-slate-500 mt-1">Xem chi tiết tình trạng điểm danh của sinh viên qua các phiên</p>
         </div>
+        <button onClick={handleExport} className="btn btn-primary flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow-sm">
+          <FileSpreadsheet size={18} /> Xuất Excel
+        </button>
       </div>
 
       <div className="card p-4">
