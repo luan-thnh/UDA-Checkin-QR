@@ -52,7 +52,7 @@ export default async function handler(req: VercelReq, res: VercelRes) {
     const body = readBody<{ rows?: unknown[] }>(req);
     const { imported, skipped } = parseStudentRows((body.rows ?? []) as never);
     if (imported.length) {
-      await supabase.from('students').upsert(
+      const { error } = await supabase.from('students').upsert(
         imported.map((student) => ({
           student_code: normalizeStudentCode(student.studentCode),
           full_name: student.fullName,
@@ -63,6 +63,10 @@ export default async function handler(req: VercelReq, res: VercelRes) {
         })),
         { onConflict: 'student_code' },
       );
+      if (error) {
+        res.status(500).json({ code: 'INVALID_INPUT', message: `Lỗi CSDL: ${error.message}`, data: null });
+        return;
+      }
     }
     res.status(200).json({
       code: 'SUCCESS',

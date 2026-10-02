@@ -19,8 +19,9 @@ export async function listStudents(query: string): Promise<Student[]> {
     studentCode: row.student_code,
     fullName: row.full_name,
     className: row.class_name,
-    faculty: row.faculty,
-    email: row.email,
+    subject: row.subject ?? undefined,
+    faculty: row.faculty ?? undefined,
+    email: row.email ?? undefined,
   }));
 }
 
@@ -32,8 +33,9 @@ export async function getStudent(studentCode: string): Promise<Student | null> {
     studentCode: data.student_code,
     fullName: data.full_name,
     className: data.class_name,
-    faculty: data.faculty,
-    email: data.email,
+    subject: data.subject ?? undefined,
+    faculty: data.faculty ?? undefined,
+    email: data.email ?? undefined,
   };
 }
 
@@ -45,8 +47,9 @@ export async function upsertStudents(students: Student[]): Promise<{ upserted: n
     student_code: normalizeStudentCode(s.studentCode),
     full_name: s.fullName,
     class_name: s.className,
-    faculty: s.faculty,
-    email: s.email,
+    subject: s.subject ?? null,
+    faculty: s.faculty ?? null,
+    email: s.email ?? null,
   }));
 
   const { error } = await supabase.from('students').upsert(rows, { onConflict: 'student_code' });
