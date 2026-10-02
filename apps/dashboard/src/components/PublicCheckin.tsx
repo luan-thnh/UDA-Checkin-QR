@@ -119,20 +119,33 @@ export function PublicCheckin() {
       return;
     }
     
+    // Detect in-app browsers (Zalo, FB) which often block location
+    const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+    const isInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Zalo") > -1);
+    
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLat(pos.coords.latitude);
         setLng(pos.coords.longitude);
         setAcc(pos.coords.accuracy);
         setGeoStatus('granted');
-        setGeoError(''); // Fix: Xóa thông báo lỗi cũ nếu có
+        setGeoError('');
       },
       (err) => {
         setGeoStatus('denied');
-        if (err.code === 1) setGeoError('Bạn đã từ chối cấp quyền vị trí. Vui lòng bật lại trong cài đặt trình duyệt.');
-        else setGeoError('Không thể lấy vị trí hiện tại của bạn.');
+        if (err.code === 1) {
+          if (isInApp) {
+             setGeoError('Trình duyệt (Zalo/Facebook) đang chặn định vị. Vui lòng bấm dấu ... ở góc phải và chọn "Mở bằng trình duyệt (Safari/Chrome)".');
+          } else {
+             setGeoError('Bạn đã từ chối cấp quyền vị trí. Vui lòng bấm vào icon 🔒 trên thanh địa chỉ (URL) -> Bật Vị trí (Location) và tải lại trang.');
+          }
+        } else if (err.code === 2) {
+          setGeoError('Không có tín hiệu GPS. Vui lòng ra nơi thoáng đãng hoặc bật Định vị trên điện thoại.');
+        } else {
+          setGeoError('Không thể lấy vị trí. Vui lòng thử lại.');
+        }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
 
