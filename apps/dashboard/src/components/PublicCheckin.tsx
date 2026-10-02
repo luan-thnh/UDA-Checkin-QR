@@ -9,14 +9,14 @@ function apiBase(): string {
 }
 
 async function getSessionPublic(id: string): Promise<CheckinSession> {
-  const res = await fetch(`${apiBase()}/api/public/session/${id}`);
+  const res = await fetch(`${apiBase()}/api/sessions/${id}`);
   const data = await res.json();
   if (data.code !== 'SUCCESS') throw new Error(data.message);
   return data.data;
 }
 
 async function submitAttend(payload: any): Promise<ApiResponse<AttendSuccessData>> {
-  const res = await fetch(`${apiBase()}/api/public/attend`, {
+  const res = await fetch(`${apiBase()}/api/attend`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(payload),

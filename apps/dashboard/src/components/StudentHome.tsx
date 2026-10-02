@@ -143,6 +143,37 @@ function QRScanner({ onScan, onClose }: { onScan: (code: string) => void, onClos
         #qr-reader div[style*="color: red"] { display: none !important; }
         #qr-reader div[style*="rgba(255, 0, 0"] { display: none !important; }
         #qr-reader__dashboard_section_csr { padding: 10px 0 !important; }
+        /* Style injected UI */
+        #qr-reader button {
+          background-color: #3b82f6 !important;
+          color: white !important;
+          border: none !important;
+          padding: 8px 16px !important;
+          border-radius: 12px !important;
+          font-weight: 600 !important;
+          margin: 8px 4px !important;
+          cursor: pointer !important;
+          box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2) !important;
+        }
+        #qr-reader a {
+          display: inline-block !important;
+          margin-top: 8px !important;
+          color: #64748b !important;
+          text-decoration: underline !important;
+          font-weight: 500 !important;
+        }
+        #qr-reader select {
+          padding: 10px !important;
+          border-radius: 12px !important;
+          border: 1px solid #cbd5e1 !important;
+          margin-bottom: 12px !important;
+          width: 90% !important;
+          font-size: 14px !important;
+          outline: none !important;
+        }
+        #qr-reader__dashboard_section_swaplink {
+          margin-bottom: 16px !important;
+        }
       `}</style>
       <div id="qr-reader" className="w-full [&>div]:!border-none [&_video]:rounded-lg"></div>
       <button 
