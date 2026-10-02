@@ -190,3 +190,9 @@ export async function getSessionAttendances(sessionId: string): Promise<any[]> {
     faculty: row.student?.faculty
   }));
 }
+
+export async function deleteAttendance(sessionId: string, studentCode: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase.from("attendances").delete().eq("session_id", sessionId).eq("student_code", studentCode);
+  return !error;
+}

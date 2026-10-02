@@ -122,3 +122,9 @@ export function downloadWithAuth(path: string, filename: string): void {
     })
     .catch((error: Error) => alert(error.message));
 }
+
+export async function deleteAttendance(sessionId: string, studentCode: string): Promise<void> {
+  return request(`/api/attendances/${encodeURIComponent(sessionId)}/${encodeURIComponent(studentCode)}`, {
+    method: "DELETE"
+  });
+}

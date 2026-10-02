@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import type { Student, CheckinSession } from '@checkin/shared';
-import { fetchStudents, fetchSessions, fetchAllAttendances } from '../services/api';
+import { fetchStudents, fetchSessions, fetchAllAttendances, deleteAttendance } from '../services/api';
+import { toast } from "sonner";
 import { Search, Filter, CalendarDays, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function ReportsPanel() {
@@ -16,6 +17,18 @@ export function ReportsPanel() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  const handleDeleteAttendance = async (sessionId: string, studentCode: string, studentName: string) => {
+    if (!window.confirm(`Xóa lượt điểm danh của sinh viên ${studentName}?\n(Hành động này cũng sẽ gỡ Device ID giúp thiết bị đó có thể điểm danh lại)`)) return;
+    
+    try {
+      await deleteAttendance(sessionId, studentCode);
+      setAttendances(prev => prev.filter(a => !(a.sessionId === sessionId && a.studentCode === studentCode)));
+      toast.success('Đã xóa lượt điểm danh và giải phóng thiết bị!');
+    } catch (err: any) {
+      toast.error('Lỗi khi xóa: ' + err.message);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -211,9 +224,13 @@ export function ReportsPanel() {
                         
                         return (
                           <td key={session.id} className="table-td text-center p-0">
-                            <div className="flex items-center justify-center h-full w-full py-3" title={att ? `Điểm danh lúc: ${new Date(att.checkedAt).toLocaleString('vi-VN')}` : 'Vắng'}>
+                            <div 
+                              className="flex items-center justify-center h-full w-full py-3 cursor-pointer hover:bg-danger/5 transition-colors" 
+                              title={att ? `Điểm danh lúc: ${new Date(att.checkedAt).toLocaleString('vi-VN')}\n(Click để xóa)` : 'Vắng'}
+                              onClick={() => att ? handleDeleteAttendance(session.id, student.studentCode, student.fullName) : null}
+                            >
                               {att ? (
-                                <CheckCircle2 size={20} className="text-primary" />
+                                <CheckCircle2 size={20} className="text-primary hover:text-danger transition-colors" />
                               ) : (
                                 <XCircle size={20} className="text-slate-200" />
                               )}

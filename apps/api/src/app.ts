@@ -131,6 +131,16 @@ export function createApp() {
 
 
 
+    const attMatch = path.match(/^\/api\/attendances\/([^/]+)\/([^/]+)$/);
+    if (req.method === "DELETE" && attMatch) {
+      if (!requireAuth(req, res)) return;
+      const { deleteAttendance } = await import("./services/attendance.service.js");
+      const deleted = await deleteAttendance(decodeURIComponent(attMatch[1]), decodeURIComponent(attMatch[2]));
+      if (deleted) sendJson(res, 200, { code: "SUCCESS", message: "Da xoa diem danh", data: null });
+      else sendJson(res, 400, { code: "INVALID_INPUT", message: "Khong the xoa", data: null });
+      return;
+    }
+
     if (req.method === 'DELETE' && path === '/api/students') {
       if (!requireAuth(req, res)) return;
       const className = url.searchParams.get('className');
