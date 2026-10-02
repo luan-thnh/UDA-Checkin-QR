@@ -1,4 +1,4 @@
-import { handleCors, requireAdmin, supabaseOr500, type VercelReq, type VercelRes } from '../../../../src/vercel/handler.js';
+import { handleCors, requireAdmin, supabaseOr500, type VercelReq, type VercelRes } from '../../../src/vercel/handler.js';
 
 export default async function handler(req: VercelReq, res: VercelRes) {
   if (handleCors(req, res)) return;
