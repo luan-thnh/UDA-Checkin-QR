@@ -17,6 +17,7 @@ export default async function handler(req: VercelReq, res: VercelRes) {
         studentCode: row.student_code,
         fullName: row.full_name,
         className: row.class_name,
+        subject: row.subject ?? undefined,
         faculty: row.faculty ?? undefined,
         email: row.email ?? undefined,
       }));
@@ -32,6 +33,7 @@ export default async function handler(req: VercelReq, res: VercelRes) {
       studentCode: row.student_code,
       fullName: row.full_name,
       className: row.class_name,
+      subject: row.subject ?? undefined,
       faculty: row.faculty ?? undefined,
       email: row.email ?? undefined,
     }));
@@ -49,6 +51,7 @@ export default async function handler(req: VercelReq, res: VercelRes) {
           student_code: normalizeStudentCode(student.studentCode),
           full_name: student.fullName,
           class_name: student.className,
+          subject: student.subject ?? null,
           faculty: student.faculty ?? null,
           email: student.email ?? null,
         })),

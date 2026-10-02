@@ -12,6 +12,9 @@ const HEADER_MAP: Record<string, keyof RawStudentRow> = {
   ten: 'HoTen',
   lop: 'Lop',
   class: 'Lop',
+  monhoc: 'MonHoc',
+  mon: 'MonHoc',
+  subject: 'MonHoc',
   khoa: 'Khoa',
   email: 'Email',
 };

@@ -91,6 +91,7 @@ export function StudentsPanel() {
       result = result.filter(s => 
         s.studentCode.toLowerCase().includes(q) || 
         s.fullName.toLowerCase().includes(q) ||
+        (s.subject && s.subject.toLowerCase().includes(q)) ||
         (s.faculty && s.faculty.toLowerCase().includes(q))
       );
     }
@@ -147,7 +148,7 @@ export function StudentsPanel() {
                 <input
                   type="text"
                   className="input pl-10 bg-white"
-                  placeholder="Tên, MSSV, Khoa..."
+                  placeholder="Tên, MSSV, Môn học, Khoa..."
                   value={query}
                   onChange={e => {
                     setQuery(e.target.value);
@@ -219,6 +220,7 @@ export function StudentsPanel() {
                     <th className="table-th w-32">MSSV</th>
                     <th className="table-th">Họ và tên</th>
                     <th className="table-th w-40">Lớp</th>
+                    <th className="table-th w-40">Môn học</th>
                     <th className="table-th w-64">Khoa</th>
                     <th className="table-th w-24 text-right">Thao tác</th>
                   </tr>
@@ -237,6 +239,7 @@ export function StudentsPanel() {
                           {student.className}
                         </span>
                       </td>
+                      <td className="table-td text-slate-600">{student.subject || '-'}</td>
                       <td className="table-td text-slate-500">{student.faculty || '-'}</td>
                       <td className="table-td text-right">
                         <button 
@@ -303,6 +306,7 @@ export function StudentsPanel() {
                 <div className="text-primary-light text-sm mt-1 flex gap-4">
                   <span>MSSV: {selectedStudent.studentCode}</span>
                   <span>Lớp: {selectedStudent.className}</span>
+                  {selectedStudent.subject && <span>Môn học: {selectedStudent.subject}</span>}
                   {selectedStudent.faculty && <span>Khoa: {selectedStudent.faculty}</span>}
                 </div>
               </div>

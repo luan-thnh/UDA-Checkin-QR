@@ -5,6 +5,7 @@ export interface RawStudentRow {
   MSSV?: unknown;
   HoTen?: unknown;
   Lop?: unknown;
+  MonHoc?: unknown;
   Khoa?: unknown;
   Email?: unknown;
 }
@@ -41,6 +42,7 @@ export function parseStudentRows(rows: RawStudentRow[]): ImportStudentsResult {
       studentCode: code,
       fullName,
       className: String(row.Lop ?? '').trim(),
+      subject: String(row.MonHoc ?? '').trim() || undefined,
       faculty: String(row.Khoa ?? '').trim() || undefined,
       email: String(row.Email ?? '').trim() || undefined,
     });
@@ -54,12 +56,13 @@ function escapeCsvCell(value: string): string {
 }
 
 export function studentsToCsv(students: Student[]): string {
-  const header = 'MSSV,HoTen,Lop,Khoa,Email';
+  const header = 'MSSV,HoTen,Lop,MonHoc,Khoa,Email';
   const lines = students.map((student) =>
     [
       student.studentCode,
       student.fullName,
       student.className,
+      student.subject ?? '',
       student.faculty ?? '',
       student.email ?? '',
     ]

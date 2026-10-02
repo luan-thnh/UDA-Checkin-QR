@@ -10,6 +10,7 @@ export interface Student {
   studentCode: string;
   fullName: string;
   className: string;
+  subject?: string;
   faculty?: string;
   email?: string;
 }
@@ -59,4 +60,4 @@ export interface AttendSuccessData {
 
 export const DEFAULT_RADIUS_M = 2000;
 
-export const EXCEL_COLUMNS = ['MSSV', 'HoTen', 'Lop', 'Khoa', 'Email'] as const;
+export const EXCEL_COLUMNS = ['MSSV', 'HoTen', 'Lop', 'MonHoc', 'Khoa', 'Email'] as const;
