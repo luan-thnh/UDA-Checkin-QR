@@ -84,15 +84,28 @@ function DashboardLayout({ onLogout }: { onLogout: () => void }) {
   );
 }
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 60 * 1000,
+    },
+  },
+});
+
 export function DashboardApp() {
   const [authed, setAuthed] = useState(() => Boolean(getToken()));
 
   if (!authed) return <LoginForm onDone={() => setAuthed(true)} />;
 
   return (
-    <DashboardLayout onLogout={() => {
-      clearToken();
-      setAuthed(false);
-    }} />
+    <QueryClientProvider client={queryClient}>
+      <DashboardLayout onLogout={() => {
+        clearToken();
+        setAuthed(false);
+      }} />
+    </QueryClientProvider>
   );
 }
