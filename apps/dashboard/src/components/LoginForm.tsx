@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { validateLoginForm, type FieldErrors } from '@checkin/shared';
 import { login, setToken } from '../services/api';
+import { Check } from 'lucide-react';
 
 export function LoginForm({ onDone }: { onDone: () => void }) {
   const [email, setEmail] = useState('admin@truong.edu.vn');
@@ -28,41 +29,49 @@ export function LoginForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="login-wrap">
-      <div className="card login-card">
-        <div className="brand">
-          <span className="brand-mark">✓</span>
-          <div>
-            <h1>Điểm danh QR</h1>
-            <p>Đăng nhập quản trị viên</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="card w-full max-w-md p-8 shadow-xl border-0 ring-1 ring-slate-900/5">
+        <div className="flex flex-col items-center justify-center mb-8 text-center">
+          <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg shadow-primary/30">
+            <Check size={32} strokeWidth={3} />
           </div>
+          <h1 className="text-2xl font-bold text-slate-800">Điểm danh QR</h1>
+          <p className="text-slate-500 mt-1">Đăng nhập quản trị viên</p>
         </div>
-        <form onSubmit={handleSubmit} noValidate>
-          <label className="field">
-            Email admin
+        
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+          <div>
+            <label className="label">Email admin</label>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@truong.edu.vn"
               autoComplete="username"
-              className={errors.email ? 'invalid' : ''}
+              className={`input ${errors.email ? 'border-danger focus:ring-danger' : ''}`}
             />
-            <span className="field-error">{errors.email ?? ''}</span>
-          </label>
-          <label className="field">
-            Mật khẩu
+            {errors.email && <span className="text-xs text-danger mt-1 block">{errors.email}</span>}
+          </div>
+          
+          <div>
+            <label className="label">Mật khẩu</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               autoComplete="current-password"
-              className={errors.password ? 'invalid' : ''}
+              className={`input ${errors.password ? 'border-danger focus:ring-danger' : ''}`}
             />
-            <span className="field-error">{errors.password ?? ''}</span>
-          </label>
-          {serverError ? <p className="notice error">{serverError}</p> : null}
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {errors.password && <span className="text-xs text-danger mt-1 block">{errors.password}</span>}
+          </div>
+          
+          {serverError && (
+            <div className="p-3 bg-danger/10 text-danger text-sm rounded-lg border border-danger/20 font-medium">
+              {serverError}
+            </div>
+          )}
+          
+          <button type="submit" className="btn btn-primary w-full h-11 text-base mt-2" disabled={loading}>
             {loading ? 'Đang đăng nhập…' : 'Đăng nhập'}
           </button>
         </form>
