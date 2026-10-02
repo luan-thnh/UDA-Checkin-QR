@@ -67,12 +67,13 @@ export function SessionsPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Quản lý Phiên Điểm Danh</h2>
           <p className="text-slate-500 mt-1">Tạo mã QR và theo dõi điểm danh realtime</p>
         </div>
-        <div className="flex bg-slate-100 rounded-lg p-1 mr-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex bg-slate-100 rounded-lg p-1">
           <button 
             className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-1.5 transition-all ${qrMode === 'web' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             onClick={() => handleQrModeChange('web')}
@@ -85,10 +86,11 @@ export function SessionsPanel() {
           >
             <Smartphone size={14} /> Zalo Mini App
           </button>
+          </div>
+          <button className="btn bg-primary text-white hover:bg-primary-dark focus:ring-primary shadow-md shadow-primary/20 whitespace-nowrap" onClick={() => setIsCreating(!isCreating)}>
+            <Plus size={18} className="mr-2" /> Tạo Phiên Mới
+          </button>
         </div>
-        <button className="btn bg-primary text-white hover:bg-primary-dark focus:ring-primary shadow-md shadow-primary/20" onClick={() => setIsCreating(!isCreating)}>
-          <Plus size={18} className="mr-2" /> Tạo Phiên Mới
-        </button>
       </div>
 
       {isCreating && (
