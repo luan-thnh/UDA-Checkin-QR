@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { buildSessionDeepLink, type CheckinSession } from '@checkin/shared';
 import { QRCodeSVG } from 'qrcode.react';
 import { closeSession, downloadWithAuth, fetchAttendances, fetchSessions, type AttendanceListData, type CreatedSession } from '../services/api';
-import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users, Trash2, Loader2 } from 'lucide-react';
+import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users, Trash2, Loader2, Globe, Smartphone } from 'lucide-react';
 import { CreateSessionForm } from './CreateSessionForm';
 
 import { useMutation } from '@tanstack/react-query';
@@ -44,6 +44,15 @@ export function SessionsPanel() {
   const [detail, setDetail] = useState<AttendanceListData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
+  const [qrMode, setQrMode] = useState<'web' | 'miniapp'>(() => {
+    return (localStorage.getItem('checkin_qr_mode') as 'web' | 'miniapp') || 'web';
+  });
+
+  const handleQrModeChange = (mode: 'web' | 'miniapp') => {
+    setQrMode(mode);
+    localStorage.setItem('checkin_qr_mode', mode);
+  };
+
 
   const filteredSessions = useMemo(() => {
     if (!query) return sessions;
@@ -62,6 +71,20 @@ export function SessionsPanel() {
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Quản lý Phiên Điểm Danh</h2>
           <p className="text-slate-500 mt-1">Tạo mã QR và theo dõi điểm danh realtime</p>
+        </div>
+        <div className="flex bg-slate-100 rounded-lg p-1 mr-4">
+          <button 
+            className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-1.5 transition-all ${qrMode === 'web' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            onClick={() => handleQrModeChange('web')}
+          >
+            <Globe size={14} /> Web
+          </button>
+          <button 
+            className={`px-3 py-1.5 text-sm font-medium rounded-md flex items-center gap-1.5 transition-all ${qrMode === 'miniapp' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            onClick={() => handleQrModeChange('miniapp')}
+          >
+            <Smartphone size={14} /> Zalo Mini App
+          </button>
         </div>
         <button className="btn bg-primary text-white hover:bg-primary-dark focus:ring-primary shadow-md shadow-primary/20" onClick={() => setIsCreating(!isCreating)}>
           <Plus size={18} className="mr-2" /> Tạo Phiên Mới
@@ -179,6 +202,11 @@ export function SessionsPanel() {
 
       {/* QR Code Modal Overlay */}
       {qrSession && (
+        (() => {
+          const actualQrPayload = qrMode === 'web' 
+            ? `${window.location.origin}/c/${qrSession.id}` 
+            : (qrSession.qrPayload ?? buildSessionDeepLink(import.meta.env.VITE_MINI_APP_ID || '4134446949382821265', qrSession.id));
+          return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="bg-primary p-6 text-center text-white">
@@ -189,7 +217,7 @@ export function SessionsPanel() {
               <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
                 <Suspense fallback={<div className="w-64 h-64 bg-slate-100 animate-pulse rounded-lg"></div>}>
                   <QRCodeSVG 
-                    value={qrSession.qrPayload ?? buildSessionDeepLink(import.meta.env.VITE_MINI_APP_ID || '4134446949382821265', qrSession.id)} 
+                    value={actualQrPayload} 
                     size={256} 
                   />
                 </Suspense>
@@ -200,7 +228,7 @@ export function SessionsPanel() {
                   className="hover:text-primary transition-colors" 
                   title="Copy payload" 
                   onClick={() => {
-                    navigator.clipboard.writeText(qrSession.qrPayload || qrSession.id);
+                    navigator.clipboard.writeText(actualQrPayload);
                     toast.success('Đã copy mã QR Payload');
                   }}
                 >
@@ -211,7 +239,9 @@ export function SessionsPanel() {
             </div>
           </div>
         </div>
-      )}
+      );
+    })()
+  )}
 
       {/* Live Detail Modal */}
       {detail && (

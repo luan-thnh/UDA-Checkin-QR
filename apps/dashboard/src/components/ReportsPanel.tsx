@@ -78,7 +78,7 @@ export function ReportsPanel() {
     if (selectedSubject) {
       list = list.filter(s => s.subject === selectedSubject);
     }
-    return list.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+    return list.sort((a, b) => (a.startsAt || '').localeCompare(b.startsAt || ''));
   }, [sessions, selectedSubject]);
 
   // Map attendances for O(1) lookup: key = `${studentCode}_${sessionId}`
