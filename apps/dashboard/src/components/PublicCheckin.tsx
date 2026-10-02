@@ -183,6 +183,19 @@ export function PublicCheckin() {
     );
   }
 
+  const isExpired = session.endsAt && !isNaN(new Date(session.endsAt).getTime()) && new Date(session.endsAt) < new Date();
+  if (session.status !== 'active' || isExpired) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 text-center border-t-4 border-danger">
+          <AlertTriangle size={48} className="text-danger mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Phiên Đã Đóng</h2>
+          <p className="text-slate-600">Phiên điểm danh này đã kết thúc hoặc đã bị đóng bởi giảng viên.</p>
+        </div>
+      </div>
+    );
+  }
+
   // Already checked in (Local Memory)
   if (alreadyCheckedInLocal && !result) {
     const savedCode = localStorage.getItem(`checkedInSession_${sessionId}`);
