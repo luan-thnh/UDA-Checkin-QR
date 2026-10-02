@@ -79,6 +79,7 @@ export function PublicCheckin() {
         setLng(pos.coords.longitude);
         setAcc(pos.coords.accuracy);
         setGeoStatus('granted');
+        setGeoError(''); // Fix: Xóa thông báo lỗi cũ nếu có
       },
       (err) => {
         setGeoStatus('denied');
