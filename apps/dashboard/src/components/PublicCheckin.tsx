@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Navigate } from 'react-router-dom';
 import { MapPin, AlertTriangle, CheckCircle2, LogOut } from 'lucide-react';
+import { StudentMap } from "./StudentMap";
 import { type CheckinSession, type AttendSuccessData, type ApiResponse } from '@checkin/shared';
 
 function apiBase(): string {
@@ -243,7 +244,7 @@ export function PublicCheckin() {
           />
 
           {/* Location Status */}
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-4">
             <div className={`w-2.5 h-2.5 rounded-full ${geoStatus === 'granted' ? 'bg-success' : geoStatus === 'denied' ? 'bg-danger' : 'bg-accent animate-pulse'}`}></div>
             <span className="text-xs font-medium text-slate-500">
               {geoStatus === 'granted' ? 'Đã lấy được vị trí GPS' : geoStatus === 'denied' ? 'Không có quyền truy cập vị trí' : 'Đang tìm tín hiệu GPS...'}
@@ -252,6 +253,16 @@ export function PublicCheckin() {
               <button onClick={requestLocation} className="text-xs text-primary underline ml-auto">Thử lại</button>
             )}
           </div>
+          
+          {geoStatus === 'granted' && lat !== null && lng !== null && session && (
+            <StudentMap 
+              sessionLat={session.latCenter}
+              sessionLng={session.lngCenter}
+              radius={session.radiusM}
+              studentLat={lat}
+              studentLng={lng}
+            />
+          )}
 
           {(formError || geoError) && (
             <div className="bg-danger-tint border border-danger/20 text-danger text-sm p-3 rounded-lg mb-6 flex items-start gap-2">
