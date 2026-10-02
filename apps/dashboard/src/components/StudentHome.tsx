@@ -98,45 +98,52 @@ export function StudentHome() {
 
 // Separate component for the scanner to manage lifecycle correctly
 function QRScanner({ onScan, onClose }: { onScan: (code: string) => void, onClose: () => void }) {
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const onScanRef = useRef(onScan);
+  useEffect(() => { onScanRef.current = onScan; }, [onScan]);
 
   useEffect(() => {
-    scannerRef.current = new Html5QrcodeScanner(
+    const scanner = new Html5QrcodeScanner(
       "qr-reader",
       { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
       /* verbose= */ false
     );
     
-    scannerRef.current.render((text) => {
-      // Pause or stop right after scanning
-      if (scannerRef.current) {
-         scannerRef.current.clear();
-      }
-      // If it's a deep link (e.g. https://zalo.me/s/.../?session=...), extract session
-      // For this app, Zalo deep link usually contains `?session=UUID` or just raw UUID
+    let isScanned = false;
+    
+    scanner.render((text) => {
+      if (isScanned) return; // Prevent multiple scans
+      isScanned = true;
+      
       let code = text;
       try {
          const url = new URL(text);
          if (url.searchParams.has('session')) {
            code = url.searchParams.get('session')!;
          }
-      } catch (e) {
-         // Not a URL, use raw string
-      }
-      onScan(code);
+      } catch (e) {}
+      
+      // Let the parent unmount this component to handle cleanup
+      onScanRef.current(code);
     }, (err) => {
-      // ignore frame scan errors (normal)
+      // ignore
     });
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(e => console.error("Failed to clear scanner", e));
-      }
+      try {
+        scanner.clear().catch(e => console.error(e));
+      } catch(e) {}
     };
-  }, [onScan]);
+  }, []);
 
   return (
     <div className="flex flex-col relative bg-black/5 rounded-xl overflow-hidden">
+      <style>{`
+        /* Hide html5-qrcode's ugly red error box */
+        #qr-reader { border: none !important; }
+        #qr-reader div[style*="color: red"] { display: none !important; }
+        #qr-reader div[style*="rgba(255, 0, 0"] { display: none !important; }
+        #qr-reader__dashboard_section_csr { padding: 10px 0 !important; }
+      `}</style>
       <div id="qr-reader" className="w-full [&>div]:!border-none [&_video]:rounded-lg"></div>
       <button 
         onClick={onClose}
