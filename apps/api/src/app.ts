@@ -4,7 +4,7 @@ import { parseStudentRows, studentsToCsv, buildSessionDeepLink } from '@checkin/
 import { checkIn } from './services/attendance.service.js';
 import { listStudents, upsertStudents } from './services/student.service.js';
 import { createSession, listSessions, closeSession } from './services/session.service.js';
-import { isOriginAllowed } from './utils/cors.js';
+
 import { createAdminToken, getAdminCredentials, isAuthorized } from './utils/auth.js';
 
 
@@ -47,16 +47,12 @@ export function createApp() {
   return createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
     const path = url.pathname;
-    const origin = req.headers.origin;
-
-    if (isOriginAllowed(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin ?? '*');
-      res.setHeader('Vary', 'Origin');
-    }
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'content-type,authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Max-Age', '86400');
     if (req.method === 'OPTIONS') {
-      res.writeHead(204);
+      res.writeHead(200);
       res.end();
       return;
     }
