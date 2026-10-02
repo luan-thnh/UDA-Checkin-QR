@@ -85,6 +85,7 @@ function DashboardLayout({ onLogout }: { onLogout: () => void }) {
 }
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PublicCheckin } from './components/PublicCheckin';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,14 +99,19 @@ const queryClient = new QueryClient({
 export function DashboardApp() {
   const [authed, setAuthed] = useState(() => Boolean(getToken()));
 
-  if (!authed) return <LoginForm onDone={() => setAuthed(true)} />;
-
   return (
     <QueryClientProvider client={queryClient}>
-      <DashboardLayout onLogout={() => {
-        clearToken();
-        setAuthed(false);
-      }} />
+      <Routes>
+        <Route path="/c/:sessionId" element={<PublicCheckin />} />
+        <Route path="/c" element={<PublicCheckin />} />
+        <Route path="/*" element={
+          !authed ? <LoginForm onDone={() => setAuthed(true)} /> :
+          <DashboardLayout onLogout={() => {
+            clearToken();
+            setAuthed(false);
+          }} />
+        } />
+      </Routes>
     </QueryClientProvider>
   );
 }
