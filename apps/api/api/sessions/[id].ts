@@ -63,7 +63,19 @@ export default async function handler(req: VercelReq, res: VercelRes) {
         fullName: r.student?.full_name,
         className: r.student?.class_name,
       }));
-      res.status(200).json({ code: 'SUCCESS', message: 'OK', data: { session, total: formatted.length, records: formatted } });
+      const mappedSession = {
+        id: session.id,
+        title: session.title,
+        subject: session.subject,
+        className: session.class_name,
+        latCenter: session.lat_center,
+        lngCenter: session.lng_center,
+        radiusM: session.radius_m,
+        startsAt: session.starts_at,
+        endsAt: session.ends_at,
+        status: session.status,
+      };
+      res.status(200).json({ code: 'SUCCESS', message: 'OK', data: { session: mappedSession, total: formatted.length, records: formatted } });
       return;
     }
     

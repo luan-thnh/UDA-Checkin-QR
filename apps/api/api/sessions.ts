@@ -17,7 +17,19 @@ export default async function handler(req: VercelReq, res: VercelRes) {
   if (req.method === 'GET') {
     if (!requireAdmin(req, res)) return;
     const { data } = await supabase.from('sessions').select('*').order('starts_at', { ascending: false });
-    res.status(200).json({ code: 'SUCCESS', message: 'OK', data: data ?? [] });
+    const mapped = (data || []).map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      subject: row.subject,
+      className: row.class_name,
+      latCenter: row.lat_center,
+      lngCenter: row.lng_center,
+      radiusM: row.radius_m,
+      startsAt: row.starts_at,
+      endsAt: row.ends_at,
+      status: row.status,
+    }));
+    res.status(200).json({ code: 'SUCCESS', message: 'OK', data: mapped });
     return;
   }
 
