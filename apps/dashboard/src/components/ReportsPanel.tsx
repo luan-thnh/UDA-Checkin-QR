@@ -195,7 +195,7 @@ export function ReportsPanel() {
                   <th className="table-th text-center">Lớp</th>
                   {filteredSessions.map(session => (
                     <th key={session.id} className="table-th text-center min-w-[120px]">
-                      <div className="font-semibold text-slate-700 truncate max-w-[120px]" title={session.title}>
+                      <div className="font-semibold text-slate-700 whitespace-nowrap" title={session.title}>
                         {session.title}
                       </div>
                       <div className="text-[10px] text-slate-400 mt-0.5">
@@ -215,7 +215,7 @@ export function ReportsPanel() {
                   return (
                     <tr key={student.studentCode} className="hover:bg-slate-50/50 transition-colors">
                       <td className="table-td sticky left-0 z-10 bg-white shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-slate-50/50">
-                        <div className="font-semibold text-slate-800">{student.fullName}</div>
+                        <div className="font-semibold text-slate-800 whitespace-nowrap">{student.fullName}</div>
                         <div className="text-xs text-slate-500 font-mono">{student.studentCode}</div>
                       </td>
                       <td className="table-td text-center text-slate-600">{student.className}</td>
