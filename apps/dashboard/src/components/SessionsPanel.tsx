@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { closeSession, createSession, downloadWithAuth, fetchAttendances, fetchSessions, fetchStudents, type AttendanceListData, type CreatedSession } from '../services/api';
 import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users, Trash2 } from 'lucide-react';
 import { MapModal } from './MapModal';
+import { MiniMap } from './MiniMap';
 
 function todayLabel(): string {
   const d = new Date();
@@ -136,55 +137,79 @@ export function SessionsPanel() {
       </div>
 
       {isCreating && (
-        <div className="card p-6 border-primary/20 bg-primary-light/10">
-          <h3 className="text-lg font-semibold mb-4 text-slate-800">Tạo phiên điểm danh mới</h3>
-          <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div className="lg:col-span-3">
-              <label className="label">Tên phiên / Mô tả</label>
-              <input required className="input" placeholder="VD: Điểm danh tuần 1" value={title} onChange={(e) => setTitle(e.target.value)} />
-            </div>
-            <div>
-              <label className="label">Lớp học</label>
-              <select className="input bg-white appearance-none" value={className} onChange={(e) => handleClassChange(e.target.value)}>
-                <option value="">-- Chọn hoặc để trống --</option>
-                {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="lg:col-span-2">
-              <label className="label">Môn học</label>
-              <select className="input bg-white appearance-none w-full" value={subject} onChange={(e) => setSubject(e.target.value)}>
-                <option value="">-- Chọn môn --</option>
-                {subjectsForSelectedClass.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="lg:col-span-3 flex flex-col sm:flex-row gap-5 items-end">
-              <div className="flex-1 w-full">
-                <label className="label">Vĩ độ (Lat)</label>
-                <input required type="number" step="any" className="input font-mono" value={lat} onChange={(e) => setLat(e.target.value)} />
+        <div className="card p-6 border-primary/20 bg-primary-light/10 mb-8 animate-in fade-in slide-in-from-top-4">
+          <h3 className="text-lg font-bold mb-6 text-slate-800">Tạo phiên điểm danh mới</h3>
+          <form onSubmit={handleCreate} className="flex flex-col gap-6">
+            
+            {/* Section 1 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+              <div className="md:col-span-2">
+                <label className="label">Tên phiên / Mô tả</label>
+                <input required className="input" placeholder="VD: Điểm danh tuần 1" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
-              <div className="flex-1 w-full">
-                <label className="label">Kinh độ (Lng)</label>
-                <input required type="number" step="any" className="input font-mono" value={lng} onChange={(e) => setLng(e.target.value)} />
+              <div>
+                <label className="label">Lớp học</label>
+                <select className="input bg-white appearance-none" value={className} onChange={(e) => handleClassChange(e.target.value)}>
+                  <option value="">-- Chọn hoặc để trống --</option>
+                  {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
-              <button 
-                type="button" 
-                className="btn btn-outline text-slate-700 bg-white whitespace-nowrap h-[42px]"
-                onClick={() => setShowMap(true)}
-              >
-                <MapPin size={16} className="mr-2 text-primary" /> Chọn trên bản đồ
-              </button>
+              <div>
+                <label className="label">Môn học</label>
+                <select className="input bg-white appearance-none w-full" value={subject} onChange={(e) => setSubject(e.target.value)}>
+                  <option value="">-- Chọn môn --</option>
+                  {subjectsForSelectedClass.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="label">Bán kính (mét)</label>
-              <input required type="number" className="input" value={radius} onChange={(e) => setRadius(e.target.value)} />
+
+            {/* Section 2 */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+              <div className="lg:col-span-1 flex flex-col gap-4">
+                <h4 className="font-semibold text-slate-700 text-sm uppercase tracking-wider mb-1 flex items-center"><MapPin size={16} className="mr-2 text-primary" /> Cấu hình Vị trí & Giờ</h4>
+                
+                <div>
+                  <label className="label">Thời gian mở (phút)</label>
+                  <input required type="number" className="input" value={minutes} onChange={(e) => setMinutes(e.target.value)} />
+                </div>
+                <div>
+                  <label className="label">Bán kính cho phép (mét)</label>
+                  <input required type="number" className="input" value={radius} onChange={(e) => setRadius(e.target.value)} />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Vĩ độ (Lat)</label>
+                    <input required type="number" step="any" className="input font-mono text-sm" value={lat} onChange={(e) => setLat(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="label">Kinh độ (Lng)</label>
+                    <input required type="number" step="any" className="input font-mono text-sm" value={lng} onChange={(e) => setLng(e.target.value)} />
+                  </div>
+                </div>
+                
+                <button 
+                  type="button" 
+                  className="btn btn-outline text-slate-700 bg-slate-50 border-slate-200 mt-1"
+                  onClick={() => setShowMap(true)}
+                >
+                  <MapPin size={16} className="mr-2 text-primary" /> Mở bản đồ lớn
+                </button>
+              </div>
+              
+              <div className="lg:col-span-2">
+                 <MiniMap 
+                   lat={Number(lat) || 16.0319} 
+                   lng={Number(lng) || 108.2205} 
+                   radius={Number(radius) || 2000} 
+                   onClick={() => setShowMap(true)} 
+                 />
+              </div>
             </div>
-            <div>
-              <label className="label">Thời gian mở (phút)</label>
-              <input required type="number" className="input" value={minutes} onChange={(e) => setMinutes(e.target.value)} />
-            </div>
-            <div className="lg:col-span-3 flex justify-end gap-3 pt-2">
+
+            <div className="flex justify-end gap-3 pt-2">
               <button type="button" className="btn btn-ghost" onClick={() => setIsCreating(false)}>Hủy</button>
-              <button type="submit" className="btn btn-primary">Xác nhận tạo QR</button>
+              <button type="submit" className="btn btn-primary px-8">Xác nhận tạo QR</button>
             </div>
           </form>
         </div>
