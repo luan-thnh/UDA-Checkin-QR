@@ -24,6 +24,7 @@ export function StudentsPanel() {
   const [isImporting, setIsImporting] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showExcelMenu, setShowExcelMenu] = useState(false);
+  const [selectedCodes, setSelectedCodes] = useState<Set<string>>(new Set());
   
 
   // Queries
@@ -59,6 +60,29 @@ export function StudentsPanel() {
     onSuccess: (_, deletedCode) => {
       toast.success(`Đã xóa sinh viên ${deletedCode}`);
       
+    }
+  });
+
+  
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (codes: string[]) => {
+      const { deleteStudent } = await import('../services/api');
+      await Promise.all(codes.map(code => deleteStudent(code)));
+      return codes;
+    },
+    onMutate: async (deletedCodes) => {
+      await queryClient.cancelQueries({ queryKey: ['students'] });
+      const previous = queryClient.getQueryData<Student[]>(['students']);
+      queryClient.setQueryData<Student[]>(['students'], old => (old ?? []).filter(s => !deletedCodes.includes(s.studentCode)));
+      return { previous };
+    },
+    onError: (err, _, context) => {
+      queryClient.setQueryData(['students'], context?.previous);
+      toast.error(err instanceof Error ? err.message : 'Lỗi xóa sinh viên');
+    },
+    onSuccess: (_, deletedCodes) => {
+      toast.success(`Đã xóa ${deletedCodes.length} sinh viên`);
+      setSelectedCodes(new Set());
     }
   });
 
@@ -170,6 +194,7 @@ export function StudentsPanel() {
                   onChange={e => {
                     setQuery(e.target.value);
                     setCurrentPage(1);
+                    setSelectedCodes(new Set());
                   }}
                 />
               </div>
@@ -187,6 +212,7 @@ export function StudentsPanel() {
                   onChange={e => {
                     setSelectedClass(e.target.value);
                     setCurrentPage(1);
+                    setSelectedCodes(new Set());
                   }}
                 >
                   <option value="">Tất cả lớp</option>
@@ -281,6 +307,20 @@ export function StudentsPanel() {
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr>
+                    <th className="table-th w-12 text-center">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-slate-300 text-primary focus:ring-primary cursor-pointer w-4 h-4"
+                        checked={paginatedStudents.length > 0 && selectedCodes.size === paginatedStudents.length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCodes(new Set(paginatedStudents.map(s => s.studentCode)));
+                          } else {
+                            setSelectedCodes(new Set());
+                          }
+                        }}
+                      />
+                    </th>
                     <th className="table-th w-32">MSSV</th>
                     <th className="table-th">Họ và tên</th>
                     <th className="table-th w-40">Lớp</th>
@@ -296,6 +336,19 @@ export function StudentsPanel() {
                       className="hover:bg-slate-50 transition-colors cursor-pointer"
                       onClick={() => setSelectedStudent(student)}
                     >
+                      <td className="table-td text-center" onClick={e => e.stopPropagation()}>
+                        <input 
+                          type="checkbox" 
+                          className="rounded border-slate-300 text-primary focus:ring-primary cursor-pointer w-4 h-4"
+                          checked={selectedCodes.has(student.studentCode)}
+                          onChange={(e) => {
+                            const newSet = new Set(selectedCodes);
+                            if (e.target.checked) newSet.add(student.studentCode);
+                            else newSet.delete(student.studentCode);
+                            setSelectedCodes(newSet);
+                          }}
+                        />
+                      </td>
                       <td className="table-td font-semibold text-slate-800">{student.studentCode}</td>
                       <td className="table-td font-medium text-slate-700">{student.fullName}</td>
                       <td className="table-td text-slate-600">
@@ -328,6 +381,20 @@ export function StudentsPanel() {
                   Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredStudents.length)} / {filteredStudents.length} sinh viên
                 </span>
                 <div className="flex gap-2 items-center">
+                  {selectedCodes.size > 0 && (
+                    <button 
+                      onClick={() => {
+                        if (confirm(`Bạn có chắc muốn xóa ${selectedCodes.size} sinh viên đã chọn?`)) {
+                          deleteMultipleMutation.mutate(Array.from(selectedCodes));
+                        }
+                      }}
+                      disabled={deleteMultipleMutation.isPending}
+                      className="btn btn-ghost text-danger border border-danger/20 hover:bg-danger hover:text-white px-3 py-1 mr-4 disabled:opacity-50 flex-shrink-0"
+                    >
+                      {deleteMultipleMutation.isPending ? <Loader2 size={16} className="mr-1.5 animate-spin" /> : <Trash2 size={16} className="mr-1.5" />} 
+                      Xóa ${selectedCodes.size} dòng
+                    </button>
+                  )}
                   {selectedClass && (
                     <button 
                       onClick={() => {

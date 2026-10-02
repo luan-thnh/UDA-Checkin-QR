@@ -66,6 +66,11 @@ export async function checkIn(input: AttendRequest): Promise<ApiResponse<AttendS
     return fail('STUDENT_NOT_FOUND', `MSSV ${studentCode} khong co trong danh sach.`);
   }
 
+  // 3.5 Class check
+  if (session.class_name && student.class_name && student.class_name !== session.class_name) {
+    return fail('INVALID_INPUT', `Sinh vien thuoc lop ${student.class_name}, khong duoc diem danh o phien cua lop ${session.class_name}.`);
+  }
+
   // 4. Distance check
   const distanceM = haversineMeters(input.lat, input.lng, session.lat_center, session.lng_center);
   const inside = isWithinRadius(input.lat, input.lng, session.lat_center, session.lng_center, session.radius_m);
