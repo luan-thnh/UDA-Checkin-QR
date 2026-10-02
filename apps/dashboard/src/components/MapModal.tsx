@@ -8,13 +8,12 @@ import { X, Navigation, Check } from 'lucide-react';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
-let DefaultIcon = L.icon({
+const customIcon = L.icon({
   iconUrl,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
   iconAnchor: [12, 41]
 });
-L.Marker.prototype.options.icon = DefaultIcon;
 
 function LocationMarker({ position, setPosition }: { position: [number, number], setPosition: (p: [number, number]) => void }) {
   useMapEvents({
@@ -22,7 +21,7 @@ function LocationMarker({ position, setPosition }: { position: [number, number],
       setPosition([e.latlng.lat, e.latlng.lng]);
     },
   });
-  return position ? <Marker position={position} /> : null;
+  return position ? <Marker position={position} icon={customIcon} /> : null;
 }
 
 interface MapModalProps {

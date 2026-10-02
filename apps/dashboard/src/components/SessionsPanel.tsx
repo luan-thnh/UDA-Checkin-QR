@@ -43,7 +43,7 @@ export function SessionsPanel() {
     return Array.from(cls).sort();
   }, [students]);
 
-  // Derive subjects seen for each class from past sessions
+  // Derive subjects seen for each class from past sessions and students
   const subjectsByClass = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const s of sessions) {
@@ -52,8 +52,14 @@ export function SessionsPanel() {
         map.get(s.className)!.add(s.subject);
       }
     }
+    for (const s of students) {
+      if (s.className && s.subject) {
+        if (!map.has(s.className)) map.set(s.className, new Set());
+        map.get(s.className)!.add(s.subject);
+      }
+    }
     return map;
-  }, [sessions]);
+  }, [sessions, students]);
 
   const allKnownSubjects = useMemo(() => {
     const set = new Set<string>();
@@ -146,16 +152,10 @@ export function SessionsPanel() {
             </div>
             <div className="lg:col-span-2">
               <label className="label">Môn học</label>
-              <div className="flex gap-2">
-                <select className="input bg-white appearance-none flex-1" value={subjectsForSelectedClass.includes(subject) ? subject : (subject === '' ? '' : '__custom__')} onChange={(e) => setSubject(e.target.value === '__custom__' ? '' : e.target.value)}>
-                  <option value="">-- Chọn môn --</option>
-                  {subjectsForSelectedClass.map(s => <option key={s} value={s}>{s}</option>)}
-                  <option value="__custom__">+ Nhập môn mới...</option>
-                </select>
-                {(!subjectsForSelectedClass.includes(subject) && subject !== '') || !subjectsForSelectedClass.includes(subject) ? (
-                  <input className="input flex-1" placeholder="Nhập tên môn học mới" value={subject} onChange={(e) => setSubject(e.target.value)} />
-                ) : null}
-              </div>
+              <select className="input bg-white appearance-none w-full" value={subject} onChange={(e) => setSubject(e.target.value)}>
+                <option value="">-- Chọn môn --</option>
+                {subjectsForSelectedClass.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
             <div className="lg:col-span-3 flex flex-col sm:flex-row gap-5 items-end">
               <div className="flex-1 w-full">

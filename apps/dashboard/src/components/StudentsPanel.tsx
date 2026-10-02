@@ -16,6 +16,7 @@ export function StudentsPanel() {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
@@ -81,10 +82,18 @@ export function StudentsPanel() {
     return Array.from(cls).sort();
   }, [students]);
 
+  const uniqueSubjects = useMemo(() => {
+    const sub = new Set(students.map(s => s.subject).filter(Boolean) as string[]);
+    return Array.from(sub).sort();
+  }, [students]);
+
   const filteredStudents = useMemo(() => {
     let result = students;
     if (selectedClass) {
       result = result.filter(s => s.className === selectedClass);
+    }
+    if (selectedSubject) {
+      result = result.filter(s => s.subject === selectedSubject);
     }
     if (query) {
       const q = query.toLowerCase();
@@ -96,7 +105,7 @@ export function StudentsPanel() {
       );
     }
     return result;
-  }, [students, query, selectedClass]);
+  }, [students, query, selectedClass, selectedSubject]);
 
   const totalPages = Math.max(1, Math.ceil(filteredStudents.length / itemsPerPage));
   const paginatedStudents = useMemo(() => {
@@ -172,9 +181,31 @@ export function StudentsPanel() {
                     setCurrentPage(1);
                   }}
                 >
-                  <option value="">Tất cả các lớp</option>
+                  <option value="">Tất cả lớp</option>
                   {uniqueClasses.map(c => (
                     <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="relative w-48">
+              <label className="label text-xs uppercase tracking-wider text-slate-500 font-semibold">Lọc Môn</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Filter size={16} className="text-slate-400" />
+                </div>
+                <select 
+                  className="input pl-10 appearance-none bg-white"
+                  value={selectedSubject}
+                  onChange={e => {
+                    setSelectedSubject(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="">Tất cả môn</option>
+                  {uniqueSubjects.map(s => (
+                    <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
               </div>
