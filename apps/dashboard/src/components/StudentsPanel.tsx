@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Student } from '@checkin/shared';
 import { fetchStudents, importStudents, downloadWithAuth } from '../services/api';
-import { Search, Filter, FileDown, Upload, Download, Info, Users, Trash2, ChevronLeft, ChevronRight, X, Clock, MapPin, CheckCircle2, FileSpreadsheet, ChevronDown } from 'lucide-react';
+import { Search, Filter, FileDown, Upload, Download, Users, Trash2, ChevronLeft, ChevronRight, X, Clock, MapPin, CheckCircle2, FileSpreadsheet, ChevronDown, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { request } from '../services/api';
 
@@ -20,10 +21,10 @@ export function StudentsPanel() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  const [notice, setNotice] = useState('');
-  const [noticeError, setNoticeError] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showExcelMenu, setShowExcelMenu] = useState(false);
+  
 
   // Queries
   const { data: students = [], isLoading: loading } = useQuery({
@@ -52,12 +53,12 @@ export function StudentsPanel() {
     },
     onError: (err, _, context) => {
       queryClient.setQueryData(['students'], context?.previous);
-      setNotice(err instanceof Error ? err.message : 'Lỗi xóa sinh viên');
-      setNoticeError(true);
+      toast.error(err instanceof Error ? err.message : 'Lỗi xóa sinh viên');
+      
     },
     onSuccess: (_, deletedCode) => {
-      setNotice(`Đã xóa sinh viên ${deletedCode}`);
-      setNoticeError(false);
+      toast.success(`Đã xóa sinh viên ${deletedCode}`);
+      
     }
   });
 
@@ -68,13 +69,13 @@ export function StudentsPanel() {
     },
     onSuccess: (res, cls) => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
-      setNotice(`Đã xóa thành công ${res.deleted} sinh viên lớp ${cls}`);
-      setNoticeError(false);
+      toast.success(`Đã xóa thành công ${res.deleted} sinh viên lớp ${cls}`);
+      
       setSelectedClass('');
     },
     onError: (err) => {
-      setNotice(err instanceof Error ? err.message : 'Lỗi xóa lớp');
-      setNoticeError(true);
+      toast.error(err instanceof Error ? err.message : 'Lỗi xóa lớp');
+      
     }
   });
 
@@ -121,20 +122,26 @@ export function StudentsPanel() {
 
   async function handleFile(file?: File) {
     if (!file) return;
-    try {
-      setNotice('Đang đọc file Excel...');
-      setNoticeError(false);
+    setIsImporting(true);
+    
+    const importPromise = (async () => {
       const { readStudentRowsFromFile } = await import('../utils/excel');
       const rows = await readStudentRowsFromFile(file);
-      
-      setNotice('Đang lưu vào hệ thống...');
       const res = await importStudents(rows);
-      setNotice(`Import thành công ${res.imported} sinh viên.`);
-      queryClient.invalidateQueries({ queryKey: ['students'] });
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : 'Import thất bại');
-      setNoticeError(true);
-    }
+      await queryClient.invalidateQueries({ queryKey: ['students'] });
+      return res;
+    })();
+
+    toast.promise(importPromise, {
+      loading: 'Đang đọc và lưu file Excel...',
+      success: (res) => `Import thành công ${res.imported} sinh viên.`,
+      error: (e) => e instanceof Error ? e.message : 'Import thất bại',
+    });
+
+    try {
+      await importPromise;
+    } catch(e) {}
+    setIsImporting(false);
   }
 
   return (
@@ -234,9 +241,10 @@ export function StudentsPanel() {
                   >
                     <FileDown size={16} className="mr-2 text-slate-400" /> Tải file mẫu
                   </button>
-                  <label className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center cursor-pointer">
-                    <Upload size={16} className="mr-2 text-primary" /> Import Excel
-                    <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={(e) => {
+                  <label className={`w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center cursor-pointer ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {isImporting ? <Loader2 size={16} className="mr-2 text-primary animate-spin" /> : <Upload size={16} className="mr-2 text-primary" />} 
+                    {isImporting ? 'Đang Import...' : 'Import Excel'}
+                    <input type="file" accept=".xlsx,.xls,.csv" hidden disabled={isImporting} onChange={(e) => {
                       setShowExcelMenu(false);
                       void handleFile(e.target.files?.[0]);
                     }} />
@@ -256,11 +264,6 @@ export function StudentsPanel() {
           </div>
         </div>
 
-        {notice && (
-          <div className={`px-4 py-3 border-b flex items-center gap-2 ${noticeError ? 'bg-danger-tint text-danger border-danger/20' : 'bg-success-tint text-success-700 border-success/20'}`}>
-            <Info size={18} /> <span className="font-medium text-sm">{notice}</span>
-          </div>
-        )}
 
         <div className="overflow-x-auto">
           {loading ? (
@@ -310,9 +313,10 @@ export function StudentsPanel() {
                               deleteStudentMutation.mutate(student.studentCode);
                             }
                           }}
-                          className="text-danger/70 hover:text-danger hover:bg-danger-tint p-1.5 rounded-md transition-colors" title="Xóa sinh viên"
+                          disabled={deleteStudentMutation.isPending}
+                          className="text-danger/70 hover:text-danger hover:bg-danger-tint p-1.5 rounded-md transition-colors disabled:opacity-50" title="Xóa sinh viên"
                         >
-                          <Trash2 size={16} />
+                          {deleteStudentMutation.isPending && deleteStudentMutation.variables === student.studentCode ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                         </button>
                       </td>
                     </tr>
@@ -331,9 +335,11 @@ export function StudentsPanel() {
                           deleteClassMutation.mutate(selectedClass);
                         }
                       }}
-                      className="btn btn-ghost text-danger border border-danger/20 hover:bg-danger hover:text-white px-3 py-1 mr-4"
+                      disabled={deleteClassMutation.isPending}
+                      className="btn btn-ghost text-danger border border-danger/20 hover:bg-danger hover:text-white px-3 py-1 mr-4 disabled:opacity-50"
                     >
-                      <Trash2 size={16} className="mr-1.5" /> Xóa lớp {selectedClass}
+                      {deleteClassMutation.isPending ? <Loader2 size={16} className="mr-1.5 animate-spin" /> : <Trash2 size={16} className="mr-1.5" />} 
+                      {deleteClassMutation.isPending ? 'Đang xóa...' : `Xóa lớp ${selectedClass}`}
                     </button>
                   )}
                   <button 

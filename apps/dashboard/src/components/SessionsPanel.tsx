@@ -1,117 +1,49 @@
-import { Suspense, useState, useMemo, useCallback } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { buildSessionDeepLink, type CheckinSession, type Student } from '@checkin/shared';
+import { buildSessionDeepLink, type CheckinSession } from '@checkin/shared';
 import { QRCodeSVG } from 'qrcode.react';
-import { closeSession, createSession, downloadWithAuth, fetchAttendances, fetchSessions, fetchStudents, type AttendanceListData, type CreatedSession } from '../services/api';
-import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users, Trash2 } from 'lucide-react';
-import { MapModal } from './MapModal';
-import { MiniMap } from './MiniMap';
+import { closeSession, downloadWithAuth, fetchAttendances, fetchSessions, type AttendanceListData, type CreatedSession } from '../services/api';
+import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users, Trash2, Loader2 } from 'lucide-react';
+import { CreateSessionForm } from './CreateSessionForm';
 
-function todayLabel(): string {
-  const d = new Date();
-  return `Điểm danh ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-}
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export function SessionsPanel() {
   const queryClient = useQueryClient();
 
   const { data: sessions = [], isLoading: loadingSessions } = useQuery<CheckinSession[]>({ queryKey: ['sessions'], queryFn: fetchSessions });
-
-  const { data: students = [] } = useQuery<Student[]>({ queryKey: ['students'], queryFn: () => fetchStudents('') });
-
-
-  const [query, setQuery] = useState('');
   
 
-  // Form states
-  const [title, setTitle] = useState(todayLabel);
-  const [subject, setSubject] = useState('');
-  const [className, setClassName] = useState('');
-  const [lat, setLat] = useState('16.0319'); // Default UDA
-  const [lng, setLng] = useState('108.2205');
-  const [radius, setRadius] = useState('2000');
-  const [minutes, setMinutes] = useState('60');
+  const [query, setQuery] = useState('');
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { deleteSession } = await import('../services/api');
+      return deleteSession(id);
+    },
+    onSuccess: () => {
+      toast.success('Đã xóa phiên điểm danh');
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Lỗi xóa phiên')
+  });
+
+  const closeSessionMutation = useMutation({
+    mutationFn: (id: string) => closeSession(id),
+    onSuccess: () => {
+      toast.success('Đã kết thúc phiên điểm danh');
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Lỗi kết thúc phiên')
+  });
+  
 
   // Modals / Overlays
   const [qrSession, setQrSession] = useState<CreatedSession | CheckinSession | null>(null);
   const [detail, setDetail] = useState<AttendanceListData | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [showMap, setShowMap] = useState(false);
 
-
-  const uniqueClasses = useMemo(() => {
-    const cls = new Set(students.map(s => s.className).filter(Boolean));
-    return Array.from(cls).sort();
-  }, [students]);
-
-  // Derive subjects seen for each class from past sessions and students
-  const subjectsByClass = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    for (const s of sessions) {
-      if (s.className && s.subject) {
-        if (!map.has(s.className)) map.set(s.className, new Set());
-        map.get(s.className)!.add(s.subject);
-      }
-    }
-    for (const s of students) {
-      if (s.className && s.subject) {
-        if (!map.has(s.className)) map.set(s.className, new Set());
-        map.get(s.className)!.add(s.subject);
-      }
-    }
-    return map;
-  }, [sessions, students]);
-
-  const allKnownSubjects = useMemo(() => {
-    const set = new Set<string>();
-    for (const s of sessions) if (s.subject) set.add(s.subject);
-    return Array.from(set).sort();
-  }, [sessions]);
-
-  const subjectsForSelectedClass = useMemo(() => {
-    if (!className) return allKnownSubjects;
-    const mapped = Array.from(subjectsByClass.get(className) ?? []);
-    return mapped.length > 0 ? mapped.sort() : allKnownSubjects;
-  }, [className, subjectsByClass, allKnownSubjects]);
-
-
-
-  // When class changes, auto-fill subject if there's exactly one known subject
-  const handleClassChange = useCallback((cls: string) => {
-    setClassName(cls);
-    const known = Array.from(subjectsByClass.get(cls) ?? []);
-    if (known.length > 0) {
-      setSubject(known[0]);
-    } else {
-      setSubject(''); // Let user pick from allKnownSubjects or add custom
-    }
-  }, [subjectsByClass]);
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      const now = new Date();
-      const end = new Date(now.getTime() + Number(minutes) * 60000);
-      const res = await createSession({
-        title,
-        subject,
-        className,
-        latCenter: Number(lat),
-        lngCenter: Number(lng),
-        radiusM: Number(radius),
-        startsAt: now.toISOString(),
-        endsAt: end.toISOString(),
-      });
-      setQrSession(res);
-      setTitle(todayLabel());
-      setSubject('');
-      setClassName('');
-      setIsCreating(false);
-      queryClient.invalidateQueries({ queryKey: ['sessions'] });
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Tạo phiên thất bại.');
-    }
-  }
 
   const filteredSessions = useMemo(() => {
     if (!query) return sessions;
@@ -137,82 +69,13 @@ export function SessionsPanel() {
       </div>
 
       {isCreating && (
-        <div className="card p-6 border-primary/20 bg-primary-light/10 mb-8 animate-in fade-in slide-in-from-top-4">
-          <h3 className="text-lg font-bold mb-6 text-slate-800">Tạo phiên điểm danh mới</h3>
-          <form onSubmit={handleCreate} className="flex flex-col gap-6">
-            
-            {/* Section 1 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-              <div className="md:col-span-2">
-                <label className="label">Tên phiên / Mô tả</label>
-                <input required className="input" placeholder="VD: Điểm danh tuần 1" value={title} onChange={(e) => setTitle(e.target.value)} />
-              </div>
-              <div>
-                <label className="label">Lớp học</label>
-                <select className="input bg-white appearance-none" value={className} onChange={(e) => handleClassChange(e.target.value)}>
-                  <option value="">-- Chọn hoặc để trống --</option>
-                  {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="label">Môn học</label>
-                <select className="input bg-white appearance-none w-full" value={subject} onChange={(e) => setSubject(e.target.value)}>
-                  <option value="">-- Chọn môn --</option>
-                  {subjectsForSelectedClass.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* Section 2 */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-              <div className="lg:col-span-1 flex flex-col gap-4">
-                <h4 className="font-semibold text-slate-700 text-sm uppercase tracking-wider mb-1 flex items-center"><MapPin size={16} className="mr-2 text-primary" /> Cấu hình Vị trí & Giờ</h4>
-                
-                <div>
-                  <label className="label">Thời gian mở (phút)</label>
-                  <input required type="number" className="input" value={minutes} onChange={(e) => setMinutes(e.target.value)} />
-                </div>
-                <div>
-                  <label className="label">Bán kính cho phép (mét)</label>
-                  <input required type="number" className="input" value={radius} onChange={(e) => setRadius(e.target.value)} />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label">Vĩ độ (Lat)</label>
-                    <input required type="number" step="any" className="input font-mono text-sm" value={lat} onChange={(e) => setLat(e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="label">Kinh độ (Lng)</label>
-                    <input required type="number" step="any" className="input font-mono text-sm" value={lng} onChange={(e) => setLng(e.target.value)} />
-                  </div>
-                </div>
-                
-                <button 
-                  type="button" 
-                  className="btn btn-outline text-slate-700 bg-slate-50 border-slate-200 mt-1"
-                  onClick={() => setShowMap(true)}
-                >
-                  <MapPin size={16} className="mr-2 text-primary" /> Mở bản đồ lớn
-                </button>
-              </div>
-              
-              <div className="lg:col-span-2">
-                 <MiniMap 
-                   lat={Number(lat) || 16.0319} 
-                   lng={Number(lng) || 108.2205} 
-                   radius={Number(radius) || 2000} 
-                   onClick={() => setShowMap(true)} 
-                 />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button type="button" className="btn btn-ghost" onClick={() => setIsCreating(false)}>Hủy</button>
-              <button type="submit" className="btn btn-primary px-8">Xác nhận tạo QR</button>
-            </div>
-          </form>
-        </div>
+        <CreateSessionForm 
+          onCreated={(session) => {
+            setQrSession(session);
+            setIsCreating(false);
+          }}
+          onCancel={() => setIsCreating(false)}
+        />
       )}
 
       <div className="card">
@@ -274,24 +137,25 @@ export function SessionsPanel() {
                     <Download size={16} className="mr-2" /> Xuất
                   </button>
                   {session.status === 'active' && (
-                    <button className="btn btn-ghost text-slate-500 hover:bg-slate-100" onClick={() => closeSession(session.id).then(() => queryClient.invalidateQueries({ queryKey: ['sessions'] }))}>
-                      <PowerOff size={16} className="mr-2" /> Đóng
+                    <button 
+                      className="btn btn-ghost text-slate-500 hover:bg-slate-100 disabled:opacity-50" 
+                      disabled={closeSessionMutation.isPending}
+                      onClick={() => closeSessionMutation.mutate(session.id)}
+                    >
+                      {closeSessionMutation.isPending && closeSessionMutation.variables === session.id ? <Loader2 size={16} className="mr-2 animate-spin" /> : <PowerOff size={16} className="mr-2" />} 
+                      {closeSessionMutation.isPending && closeSessionMutation.variables === session.id ? 'Đang đóng' : 'Đóng'}
                     </button>
                   )}
                   <button 
-                    className="btn btn-ghost text-danger hover:bg-danger-tint" 
-                    onClick={async () => {
+                    className="btn btn-ghost text-danger hover:bg-danger-tint disabled:opacity-50" 
+                    disabled={deleteSessionMutation.isPending}
+                    onClick={() => {
                       if (!confirm(`Bạn có chắc muốn xóa vĩnh viễn phiên "${session.title}" không? Thao tác này sẽ xóa cả dữ liệu điểm danh của phiên này!`)) return;
-                      try {
-                        const { deleteSession } = await import('../services/api');
-                        await deleteSession(session.id);
-                        queryClient.invalidateQueries({ queryKey: ['sessions'] });
-                      } catch (e) {
-                        alert(e instanceof Error ? e.message : 'Lỗi xóa phiên');
-                      }
+                      deleteSessionMutation.mutate(session.id);
                     }}
                   >
-                    <Trash2 size={16} className="mr-2" /> Xóa
+                    {deleteSessionMutation.isPending && deleteSessionMutation.variables === session.id ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Trash2 size={16} className="mr-2" />} 
+                    {deleteSessionMutation.isPending && deleteSessionMutation.variables === session.id ? 'Đang xóa' : 'Xóa'}
                   </button>
                 </div>
               </li>
@@ -375,17 +239,6 @@ export function SessionsPanel() {
         </div>
       )}
 
-      {showMap && (
-        <MapModal
-          initialLat={Number(lat) || 16.0319}
-          initialLng={Number(lng) || 108.2205}
-          onConfirm={(newLat, newLng) => {
-            setLat(newLat.toString());
-            setLng(newLng.toString());
-          }}
-          onClose={() => setShowMap(false)}
-        />
-      )}
     </div>
   );
 }

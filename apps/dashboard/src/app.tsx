@@ -86,6 +86,7 @@ function DashboardLayout({ onLogout }: { onLogout: () => void }) {
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PublicCheckin } from './components/PublicCheckin';
+import { Toaster } from 'sonner';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,6 +102,7 @@ export function DashboardApp() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="top-right" richColors />
       <Routes>
         <Route path="/c/:sessionId" element={<PublicCheckin />} />
         <Route path="/c" element={<PublicCheckin />} />
