@@ -16,6 +16,7 @@
   "dependencies": {
     "@checkin/shared": "workspace:*",
     "@tanstack/react-query": "^5.104.0",
+    "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.49.0",
     "qrcode.react": "^4.1.0",

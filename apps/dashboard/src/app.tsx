@@ -86,6 +86,7 @@ function DashboardLayout({ onLogout }: { onLogout: () => void }) {
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PublicCheckin } from './components/PublicCheckin';
+import { StudentHome } from './components/StudentHome';
 import { Toaster } from 'sonner';
 
 const queryClient = new QueryClient({
@@ -105,7 +106,8 @@ export function DashboardApp() {
       <Toaster position="top-right" richColors />
       <Routes>
         <Route path="/c/:sessionId" element={<PublicCheckin />} />
-        <Route path="/c" element={<PublicCheckin />} />
+        <Route path="/c" element={<StudentHome />} />
+        <Route path="/qr" element={<StudentHome />} />
         <Route path="/*" element={
           !authed ? <LoginForm onDone={() => setAuthed(true)} /> :
           <DashboardLayout onLogout={() => {

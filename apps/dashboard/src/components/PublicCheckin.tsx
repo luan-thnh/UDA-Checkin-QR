@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { MapPin, AlertTriangle, CheckCircle2, QrCode, LogOut } from 'lucide-react';
+import { useParams, useSearchParams, Navigate } from 'react-router-dom';
+import { MapPin, AlertTriangle, CheckCircle2, LogOut } from 'lucide-react';
 import { type CheckinSession, type AttendSuccessData, type ApiResponse } from '@checkin/shared';
 
 function apiBase(): string {
@@ -35,7 +35,6 @@ export function PublicCheckin() {
   const [sessionError, setSessionError] = useState('');
   
   const [studentCode, setStudentCode] = useState(() => localStorage.getItem('lastStudentCode') ?? '');
-  const [manualCode, setManualCode] = useState('');
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   
@@ -125,39 +124,7 @@ export function PublicCheckin() {
   };
 
   if (!sessionId) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden p-8 text-center">
-          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <QrCode size={40} className="text-slate-400" />
-          </div>
-          <h2 className="text-xl font-bold text-slate-800 mb-2">Chưa quét mã QR</h2>
-          <p className="text-slate-500 mb-6 text-sm">Vui lòng dùng ứng dụng Zalo hoặc Camera điện thoại quét mã QR từ Giảng viên để điểm danh.</p>
-          
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-            <div className="relative flex justify-center text-sm"><span className="px-4 bg-white text-slate-400 font-medium">HOẶC NHẬP MÃ THỦ CÔNG</span></div>
-          </div>
-          
-          <div className="mt-6 flex flex-col gap-3">
-            <input 
-              type="text" 
-              className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-center tracking-widest font-mono text-lg uppercase outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-              placeholder="VÍ DỤ: CLB123"
-              value={manualCode}
-              onChange={e => setManualCode(e.target.value.toUpperCase())}
-            />
-            <button 
-              disabled={!manualCode.trim()}
-              onClick={() => window.location.href = `/c/${manualCode.trim()}`}
-              className="w-full h-12 bg-primary text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-dark transition-colors"
-            >
-              Tiếp tục
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <Navigate to="/qr" replace />;
   }
 
   if (sessionError) {
