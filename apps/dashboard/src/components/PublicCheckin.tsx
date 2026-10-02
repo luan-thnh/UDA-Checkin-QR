@@ -32,6 +32,8 @@ async function submitAttend(payload: any): Promise<ApiResponse<AttendSuccessData
   return res.json();
 }
 
+import { detectIncognito } from 'detectincognitojs';
+
 export function PublicCheckin() {
   const { sessionId: routeSessionId } = useParams();
   const [searchParams] = useSearchParams();
@@ -41,10 +43,19 @@ export function PublicCheckin() {
   
   const [session, setSession] = useState<CheckinSession | null>(null);
   const [sessionError, setSessionError] = useState('');
+  const [isIncognitoUser, setIsIncognitoUser] = useState(false);
   
   const [studentCode, setStudentCode] = useState(() => localStorage.getItem('lastStudentCode') ?? '');
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  
+  useEffect(() => {
+    detectIncognito().then((result) => {
+      if (result.isPrivate) {
+        setIsIncognitoUser(true);
+      }
+    });
+  }, []);
   
   const [result, setResult] = useState<ApiResponse<AttendSuccessData> | null>(null);
   const [alreadyCheckedInLocal, setAlreadyCheckedInLocal] = useState(false);
@@ -161,6 +172,20 @@ export function PublicCheckin() {
 
   if (!sessionId) {
     return <Navigate to="/qr" replace />;
+  }
+
+  if (isIncognitoUser) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 text-center border-t-4 border-slate-800">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-800"><path d="M2 12a10 10 0 1 0 20 0 10 10 0 1 0-20 0"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><path d="m11 16 1-4 1 4"/></svg>
+          </div>
+          <h2 className="text-xl font-bold text-slate-800 mb-2">Chế Độ Ẩn Danh Bị Chặn</h2>
+          <p className="text-slate-600 mb-6">Hệ thống chống gian lận phát hiện bạn đang sử dụng <strong>Tab Ẩn Danh (Incognito/Private)</strong>. Để tiếp tục điểm danh, vui lòng mở link bằng trình duyệt bình thường.</p>
+        </div>
+      </div>
+    );
   }
 
   if (sessionError) {
