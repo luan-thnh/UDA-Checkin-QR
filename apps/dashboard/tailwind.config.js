@@ -8,14 +8,19 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#00a457',
-          dark: '#007a42',
-          light: '#e2f5ea',
+          DEFAULT: '#099153',
+          dark: '#06703f',
+          light: '#e6f4ed',
+        },
+        accent: {
+          DEFAULT: '#f46b23',
+          dark: '#d4570f',
+          light: '#fef0e6',
         },
         success: {
-          DEFAULT: '#10b981',
-          700: '#047857',
-          tint: '#d1fae5',
+          DEFAULT: '#099153',
+          700: '#06703f',
+          tint: '#e6f4ed',
         },
         danger: {
           DEFAULT: '#ef4444',

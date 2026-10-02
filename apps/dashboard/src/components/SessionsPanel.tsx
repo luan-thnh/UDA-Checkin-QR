@@ -1,8 +1,13 @@
-import { Suspense, useEffect, useState, useMemo } from 'react';
+import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
 import { buildSessionDeepLink, type CheckinSession, type Student } from '@checkin/shared';
 import { QRCodeSVG } from 'qrcode.react';
 import { closeSession, createSession, downloadWithAuth, fetchAttendances, fetchSessions, fetchStudents, type AttendanceListData, type CreatedSession } from '../services/api';
 import { QrCode, Plus, Search, MapPin, Clock, Copy, Download, PowerOff, List, CheckCircle2, Users, Trash2 } from 'lucide-react';
+
+function todayLabel(): string {
+  const d = new Date();
+  return `Điểm danh ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
 
 export function SessionsPanel() {
   const [sessions, setSessions] = useState<CheckinSession[]>([]);
@@ -12,7 +17,7 @@ export function SessionsPanel() {
   const [error, setError] = useState('');
 
   // Form states
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(todayLabel);
   const [subject, setSubject] = useState('');
   const [className, setClassName] = useState('');
   const [lat, setLat] = useState('16.0319'); // Default UDA
@@ -48,6 +53,34 @@ export function SessionsPanel() {
     return Array.from(cls).sort();
   }, [students]);
 
+  // Derive subjects seen for each class from past sessions
+  const subjectsByClass = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const s of sessions) {
+      if (s.className && s.subject) {
+        if (!map.has(s.className)) map.set(s.className, new Set());
+        map.get(s.className)!.add(s.subject);
+      }
+    }
+    return map;
+  }, [sessions]);
+
+  const subjectsForSelectedClass = useMemo(() => {
+    if (!className) return [];
+    return Array.from(subjectsByClass.get(className) ?? []).sort();
+  }, [className, subjectsByClass]);
+
+  // When class changes, auto-fill subject if there's exactly one known subject
+  const handleClassChange = useCallback((cls: string) => {
+    setClassName(cls);
+    const known = Array.from(subjectsByClass.get(cls) ?? []);
+    if (known.length === 1) {
+      setSubject(known[0]);
+    } else if (known.length === 0) {
+      setSubject('');
+    }
+  }, [subjectsByClass]);
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -64,7 +97,7 @@ export function SessionsPanel() {
         endsAt: end.toISOString(),
       });
       setQrSession(res);
-      setTitle('');
+      setTitle(todayLabel());
       setSubject('');
       setClassName('');
       setIsCreating(false);
@@ -92,7 +125,7 @@ export function SessionsPanel() {
           <h2 className="text-2xl font-bold text-slate-800">Quản lý Phiên Điểm Danh</h2>
           <p className="text-slate-500 mt-1">Tạo mã QR và theo dõi điểm danh realtime</p>
         </div>
-        <button className="btn btn-primary shadow-md shadow-primary/20" onClick={() => setIsCreating(!isCreating)}>
+        <button className="btn bg-accent text-white hover:bg-accent-dark focus:ring-accent shadow-md shadow-accent/20" onClick={() => setIsCreating(!isCreating)}>
           <Plus size={18} className="mr-2" /> Tạo Phiên Mới
         </button>
       </div>
@@ -107,14 +140,27 @@ export function SessionsPanel() {
             </div>
             <div>
               <label className="label">Lớp học</label>
-              <select className="input bg-white appearance-none" value={className} onChange={(e) => setClassName(e.target.value)}>
+              <select className="input bg-white appearance-none" value={className} onChange={(e) => handleClassChange(e.target.value)}>
                 <option value="">-- Chọn hoặc để trống --</option>
                 {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="lg:col-span-2">
-              <label className="label">Môn học (Tùy chọn)</label>
-              <input className="input" placeholder="VD: Lập trình Web" value={subject} onChange={(e) => setSubject(e.target.value)} />
+              <label className="label">Môn học</label>
+              {subjectsForSelectedClass.length > 0 ? (
+                <div className="flex gap-2">
+                  <select className="input bg-white appearance-none flex-1" value={subject} onChange={(e) => setSubject(e.target.value)}>
+                    <option value="">-- Chọn môn --</option>
+                    {subjectsForSelectedClass.map(s => <option key={s} value={s}>{s}</option>)}
+                    <option value="__custom__">+ Nhập môn mới...</option>
+                  </select>
+                  {subject === '__custom__' && (
+                    <input className="input flex-1" placeholder="Nhập tên môn học mới" value="" onChange={(e) => setSubject(e.target.value)} autoFocus />
+                  )}
+                </div>
+              ) : (
+                <input className="input" placeholder="VD: Lập trình Web" value={subject} onChange={(e) => setSubject(e.target.value)} />
+              )}
             </div>
             <div>
               <label className="label">Vĩ độ (Lat)</label>
@@ -229,7 +275,7 @@ export function SessionsPanel() {
       {qrSession && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-primary p-6 text-center text-white">
+            <div className="bg-accent p-6 text-center text-white">
               <h3 className="text-xl font-bold">{qrSession.title}</h3>
               {qrSession.subject && <p className="opacity-90 text-sm mt-1">{qrSession.subject}</p>}
             </div>
