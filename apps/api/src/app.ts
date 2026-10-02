@@ -118,7 +118,7 @@ export function createApp() {
 
     if (req.method === 'GET' && path === '/api/students/template') {
       if (!requireAuth(req, res)) return;
-      const header = 'MSSV,HoTen,Lop,Khoa,Email\nSV001,Nguyen Van A,IT01,CNTT,nva@example.com\nSV002,Tran Thi B,IT01,CNTT,ttb@example.com';
+      const header = 'MSSV,HoTen,Lop,MonHoc,Khoa,Email\nSV001,Nguyen Van A,IT01,Lap trinh Web,CNTT,nva@example.com\nSV002,Tran Thi B,IT01,Lap trinh Web,CNTT,ttb@example.com';
       sendCsv(res, 'template-danh-sach-sinh-vien.csv', header);
       return;
     }

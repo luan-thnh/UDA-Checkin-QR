@@ -11,6 +11,12 @@ export default async function handler(req: VercelReq, res: VercelRes) {
   const action = queryParam(req, 'action'); // ?action=export
 
   if (req.method === 'GET') {
+    if (action === 'template') {
+      const header = 'MSSV,HoTen,Lop,MonHoc,Khoa,Email\nSV001,Nguyen Van A,IT01,Lap trinh Web,CNTT,nva@example.com\nSV002,Tran Thi B,IT01,Lap trinh Web,CNTT,ttb@example.com';
+      sendCsv(res, 'template-danh-sach.csv', header);
+      return;
+    }
+
     if (action === 'export') {
       const { data } = await supabase.from('students').select('*').order('student_code');
       const rows = (data ?? []).map((row: any) => ({

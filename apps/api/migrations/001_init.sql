@@ -5,6 +5,7 @@ create table if not exists students (
   student_code text primary key,
   full_name text not null,
   class_name text not null,
+  subject text,
   faculty text,
   email text,
   created_at timestamptz not null default now()

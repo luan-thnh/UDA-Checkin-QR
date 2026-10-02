@@ -182,7 +182,7 @@ export function StudentsPanel() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button className="btn btn-outline" onClick={() => downloadWithAuth('/api/students/template', 'template-danh-sach.csv')}>
+            <button className="btn btn-outline" onClick={() => downloadWithAuth('/api/students?action=template', 'template-danh-sach.csv')}>
               <FileDown size={16} className="mr-2" /> Tải file mẫu
             </button>
             <label className="btn bg-primary text-white hover:bg-primary-dark cursor-pointer shadow-md shadow-primary/20">
