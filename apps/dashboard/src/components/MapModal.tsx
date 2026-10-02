@@ -1,10 +1,8 @@
-import { useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { X, Navigation, Check } from 'lucide-react';
 
-// Fix Leaflet's default marker icon issue in React
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -14,15 +12,6 @@ const customIcon = L.icon({
   iconSize: [25, 41],
   iconAnchor: [12, 41]
 });
-
-function LocationMarker({ position, setPosition }: { position: [number, number], setPosition: (p: [number, number]) => void }) {
-  useMapEvents({
-    click(e) {
-      setPosition([e.latlng.lat, e.latlng.lng]);
-    },
-  });
-  return position ? <Marker position={position} icon={customIcon} /> : null;
-}
 
 interface MapModalProps {
   initialLat: number;
@@ -34,6 +23,49 @@ interface MapModalProps {
 export function MapModal({ initialLat, initialLng, onConfirm, onClose }: MapModalProps) {
   const [position, setPosition] = useState<[number, number]>([initialLat, initialLng]);
   const [locating, setLocating] = useState(false);
+  
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+
+  // Initialize Map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    
+    // Create map instance
+    const map = L.map(mapContainerRef.current).setView([initialLat, initialLng], 16);
+    mapInstanceRef.current = map;
+
+    // Add TileLayer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Add initial Marker
+    const marker = L.marker([initialLat, initialLng], { icon: customIcon }).addTo(map);
+    markerRef.current = marker;
+
+    // Click event to update position
+    map.on('click', (e) => {
+      const { lat, lng } = e.latlng;
+      setPosition([lat, lng]);
+      marker.setLatLng([lat, lng]);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []); // Run once on mount
+
+  // Sync position state changes to map if updated via geolocation
+  useEffect(() => {
+    if (mapInstanceRef.current && markerRef.current) {
+      markerRef.current.setLatLng(position);
+      mapInstanceRef.current.setView(position);
+    }
+  }, [position]);
 
   function handleGetLocation() {
     setLocating(true);
@@ -71,13 +103,7 @@ export function MapModal({ initialLat, initialLng, onConfirm, onClose }: MapModa
 
         {/* Map */}
         <div className="flex-1 relative bg-slate-200">
-          <MapContainer center={position} zoom={16} style={{ width: '100%', height: '100%', zIndex: 1 }}>
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <LocationMarker position={position} setPosition={setPosition} />
-          </MapContainer>
+          <div ref={mapContainerRef} style={{ width: '100%', height: '100%', zIndex: 1 }} />
         </div>
 
         {/* Footer Actions */}

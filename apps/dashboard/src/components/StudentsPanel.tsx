@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Student } from '@checkin/shared';
 import { fetchStudents, importStudents, downloadWithAuth } from '../services/api';
-import { Search, Filter, FileDown, Upload, Download, Info, Users, Trash2, ChevronLeft, ChevronRight, X, Clock, MapPin, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, FileDown, Upload, Download, Info, Users, Trash2, ChevronLeft, ChevronRight, X, Clock, MapPin, CheckCircle2, FileSpreadsheet, ChevronDown } from 'lucide-react';
 
 import { request } from '../services/api';
 
@@ -23,6 +23,7 @@ export function StudentsPanel() {
   const [notice, setNotice] = useState('');
   const [noticeError, setNoticeError] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [showExcelMenu, setShowExcelMenu] = useState(false);
 
   // Queries
   const { data: students = [], isLoading: loading } = useQuery({
@@ -212,17 +213,46 @@ export function StudentsPanel() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <button className="btn btn-outline" onClick={() => downloadWithAuth('/api/students?action=template', 'template-danh-sach.csv')}>
-              <FileDown size={16} className="mr-2" /> Tải file mẫu
+          <div className="relative">
+            <button 
+              className="btn bg-primary text-white hover:bg-primary-dark shadow-md shadow-primary/20"
+              onClick={() => setShowExcelMenu(!showExcelMenu)}
+            >
+              <FileSpreadsheet size={18} className="mr-2" /> Thao tác Excel <ChevronDown size={16} className="ml-1" />
             </button>
-            <label className="btn bg-primary text-white hover:bg-primary-dark cursor-pointer shadow-md shadow-primary/20">
-              <Upload size={16} className="mr-2" /> Import Excel
-              <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={(e) => void handleFile(e.target.files?.[0])} />
-            </label>
-            <button className="btn btn-outline" onClick={() => downloadWithAuth('/api/students?action=export', 'danh-sach-sinh-vien.csv')}>
-              <Download size={16} className="mr-2" /> Xuất Excel
-            </button>
+
+            {showExcelMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowExcelMenu(false)}></div>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-20 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <button 
+                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
+                    onClick={() => {
+                      downloadWithAuth('/api/students?action=template', 'template-danh-sach.csv');
+                      setShowExcelMenu(false);
+                    }}
+                  >
+                    <FileDown size={16} className="mr-2 text-slate-400" /> Tải file mẫu
+                  </button>
+                  <label className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center cursor-pointer">
+                    <Upload size={16} className="mr-2 text-primary" /> Import Excel
+                    <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={(e) => {
+                      setShowExcelMenu(false);
+                      void handleFile(e.target.files?.[0]);
+                    }} />
+                  </label>
+                  <button 
+                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center"
+                    onClick={() => {
+                      downloadWithAuth('/api/students?action=export', 'danh-sach-sinh-vien.csv');
+                      setShowExcelMenu(false);
+                    }}
+                  >
+                    <Download size={16} className="mr-2 text-slate-400" /> Xuất danh sách
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
