@@ -1,4 +1,5 @@
-import { Suspense, useEffect, useState, useMemo, useCallback } from 'react';
+import { Suspense, useState, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { buildSessionDeepLink, type CheckinSession, type Student } from '@checkin/shared';
 import { QRCodeSVG } from 'qrcode.react';
 import { closeSession, createSession, downloadWithAuth, fetchAttendances, fetchSessions, fetchStudents, type AttendanceListData, type CreatedSession } from '../services/api';
@@ -11,11 +12,15 @@ function todayLabel(): string {
 }
 
 export function SessionsPanel() {
-  const [sessions, setSessions] = useState<CheckinSession[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
+  const queryClient = useQueryClient();
+
+  const { data: sessions = [], isLoading: loadingSessions } = useQuery<CheckinSession[]>({ queryKey: ['sessions'], queryFn: fetchSessions });
+
+  const { data: students = [] } = useQuery<Student[]>({ queryKey: ['students'], queryFn: () => fetchStudents('') });
+
+
   const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  
 
   // Form states
   const [title, setTitle] = useState(todayLabel);
@@ -32,23 +37,6 @@ export function SessionsPanel() {
   const [isCreating, setIsCreating] = useState(false);
   const [showMap, setShowMap] = useState(false);
 
-  async function reload() {
-    setLoading(true);
-    try {
-      const [ssData, stData] = await Promise.all([fetchSessions(), fetchStudents('')]);
-      setSessions(ssData);
-      setStudents(stData);
-      setError('');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Lỗi tải danh sách phiên.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void reload();
-  }, []);
 
   const uniqueClasses = useMemo(() => {
     const cls = new Set(students.map(s => s.className).filter(Boolean));
@@ -112,7 +100,7 @@ export function SessionsPanel() {
       setSubject('');
       setClassName('');
       setIsCreating(false);
-      void reload();
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Tạo phiên thất bại.');
     }
@@ -221,9 +209,9 @@ export function SessionsPanel() {
           </div>
         </div>
 
-        {error && <div className="p-4 text-danger bg-danger-tint">{error}</div>}
         
-        {loading ? (
+        
+        {loadingSessions ? (
           <div className="p-12 text-center text-slate-500">Đang tải danh sách...</div>
         ) : filteredSessions.length === 0 ? (
           <div className="p-12 text-center text-slate-500">Không có phiên nào.</div>
@@ -261,7 +249,7 @@ export function SessionsPanel() {
                     <Download size={16} className="mr-2" /> Xuất
                   </button>
                   {session.status === 'active' && (
-                    <button className="btn btn-ghost text-slate-500 hover:bg-slate-100" onClick={() => closeSession(session.id).then(() => void reload())}>
+                    <button className="btn btn-ghost text-slate-500 hover:bg-slate-100" onClick={() => closeSession(session.id).then(() => queryClient.invalidateQueries({ queryKey: ['sessions'] }))}>
                       <PowerOff size={16} className="mr-2" /> Đóng
                     </button>
                   )}
@@ -272,7 +260,7 @@ export function SessionsPanel() {
                       try {
                         const { deleteSession } = await import('../services/api');
                         await deleteSession(session.id);
-                        void reload();
+                        queryClient.invalidateQueries({ queryKey: ['sessions'] });
                       } catch (e) {
                         alert(e instanceof Error ? e.message : 'Lỗi xóa phiên');
                       }
