@@ -53,7 +53,7 @@ export function createApp() {
       res.setHeader('Access-Control-Allow-Origin', origin ?? '*');
       res.setHeader('Vary', 'Origin');
     }
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'content-type,authorization');
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
@@ -288,6 +288,17 @@ export function createApp() {
       const { checkDeviceAttendance } = await import("./services/attendance.service.js");
       const check = await checkDeviceAttendance(sId, dId);
       sendJson(res, 200, { code: "SUCCESS", message: "OK", data: check });
+      return;
+    }
+
+    const attMatch = path.match(/^\/api\/attendances\/([^/]+)\/([^/]+)$/);
+    if (req.method === 'DELETE' && attMatch) {
+      if (!requireAuth(req, res)) return;
+      const sessionId = decodeURIComponent(attMatch[1]);
+      const studentCode = decodeURIComponent(attMatch[2]);
+      const { deleteAttendance } = await import('./services/attendance.service.js');
+      const deleted = await deleteAttendance(sessionId, studentCode);
+      sendJson(res, 200, { code: 'SUCCESS', message: 'OK', data: { deleted } });
       return;
     }
 

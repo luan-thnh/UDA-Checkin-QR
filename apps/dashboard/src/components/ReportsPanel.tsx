@@ -188,10 +188,10 @@ export function ReportsPanel() {
           </div>
         ) : (
           <>
-            <table className="w-full text-sm text-left">
+            <table className="w-full min-w-max text-sm text-left">
               <thead>
                 <tr>
-                  <th className="table-th sticky left-0 z-10 bg-slate-50 min-w-[220px] shadow-[1px_0_0_0_#e2e8f0]">Sinh viên</th>
+                  <th className="table-th sticky left-0 z-20 bg-slate-50 min-w-[220px] shadow-[1px_0_0_0_#e2e8f0]">Sinh viên</th>
                   <th className="table-th text-center">Lớp</th>
                   {filteredSessions.map(session => (
                     <th key={session.id} className="table-th text-center min-w-[120px]">
@@ -205,7 +205,7 @@ export function ReportsPanel() {
                       </div>
                     </th>
                   ))}
-                  <th className="table-th text-center bg-primary-light text-primary-dark">Tổng</th>
+                  <th className="table-th text-center sticky right-0 z-20 bg-primary-light text-primary-dark shadow-[-1px_0_0_0_#e2e8f0]">Tổng</th>
                 </tr>
               </thead>
               <tbody>
@@ -214,7 +214,7 @@ export function ReportsPanel() {
                   
                   return (
                     <tr key={student.studentCode} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="table-td sticky left-0 z-10 bg-white shadow-[1px_0_0_0_#f1f5f9] group-hover:bg-slate-50/50">
+                      <td className="table-td sticky left-0 z-10 bg-white shadow-[1px_0_0_0_#e2e8f0] group-hover:bg-slate-50/50">
                         <div className="font-semibold text-slate-800">{student.fullName}</div>
                         <div className="text-xs text-slate-500 font-mono">{student.studentCode}</div>
                       </td>
@@ -240,7 +240,7 @@ export function ReportsPanel() {
                           </td>
                         );
                       })}
-                      <td className="table-td text-center font-bold text-slate-700 bg-slate-50/30">
+                      <td className="table-td text-center font-bold text-slate-700 sticky right-0 z-10 bg-slate-50 shadow-[-1px_0_0_0_#e2e8f0]">
                         {presentCount} / {filteredSessions.length}
                       </td>
                     </tr>
