@@ -196,7 +196,16 @@ export function SessionsPanel() {
               </div>
               <p className="mt-6 text-sm text-slate-500 font-mono bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2">
                 ID: {qrSession.id.substring(0, 8)}...
-                <button className="hover:text-primary transition-colors" title="Copy payload"><Copy size={14}/></button>
+                <button 
+                  className="hover:text-primary transition-colors" 
+                  title="Copy payload" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(qrSession.qrPayload || qrSession.id);
+                    toast.success('Đã copy mã QR Payload');
+                  }}
+                >
+                  <Copy size={14}/>
+                </button>
               </p>
               <button className="btn btn-primary w-full mt-6" onClick={() => setQrSession(null)}>Đóng lại</button>
             </div>

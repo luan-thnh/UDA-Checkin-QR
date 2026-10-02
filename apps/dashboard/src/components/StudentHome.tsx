@@ -142,18 +142,21 @@ function QRScanner({ onScan, onClose }: { onScan: (code: string) => void, onClos
         #qr-reader { border: none !important; }
         #qr-reader div[style*="color: red"] { display: none !important; }
         #qr-reader div[style*="rgba(255, 0, 0"] { display: none !important; }
-        #qr-reader__dashboard_section_csr { padding: 10px 0 !important; }
+        #qr-reader__dashboard_section_csr { padding: 10px 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; }
+        #qr-reader__dashboard_section_swaplink { margin-top: 12px !important; text-decoration: underline; color: #64748b; }
         /* Style injected UI */
         #qr-reader button {
-          background-color: #3b82f6 !important;
+          background-color: #099153 !important;
           color: white !important;
           border: none !important;
-          padding: 8px 16px !important;
-          border-radius: 12px !important;
+          padding: 10px 20px !important;
+          border-radius: 99px !important;
           font-weight: 600 !important;
-          margin: 8px 4px !important;
+          margin: 8px 0 !important;
+          width: 100% !important;
+          max-width: 280px !important;
           cursor: pointer !important;
-          box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2) !important;
+          box-shadow: 0 4px 6px -1px rgba(9, 145, 83, 0.2) !important;
         }
         #qr-reader a {
           display: inline-block !important;
