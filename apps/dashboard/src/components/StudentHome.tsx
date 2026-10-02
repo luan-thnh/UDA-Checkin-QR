@@ -144,20 +144,35 @@ function QRScanner({ onScan, onClose }: { onScan: (code: string) => void, onClos
         #qr-reader div[style*="rgba(255, 0, 0"] { display: none !important; }
         #qr-reader__dashboard_section_csr { padding: 10px 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; }
         #qr-reader__dashboard_section_swaplink { margin-top: 12px !important; text-decoration: underline; color: #64748b; }
+        
+        /* Fix icon alignment */
+        #qr-reader img { margin: 0 auto 16px auto !important; display: block !important; opacity: 0.8; }
+        
         /* Style injected UI */
         #qr-reader button {
           background-color: #099153 !important;
           color: white !important;
           border: none !important;
-          padding: 10px 20px !important;
+          padding: 8px 16px !important;
           border-radius: 99px !important;
           font-weight: 600 !important;
-          margin: 8px 0 !important;
+          font-size: 13px !important;
+          margin: 6px 0 !important;
           width: 100% !important;
-          max-width: 280px !important;
+          max-width: 260px !important;
           cursor: pointer !important;
           box-shadow: 0 4px 6px -1px rgba(9, 145, 83, 0.2) !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
         }
+        
+        /* Make the second button (Scan Image File) orange to differentiate */
+        #qr-reader button:nth-of-type(2), #html5-qrcode-button-file-selection {
+          background-color: #f97316 !important;
+          box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.2) !important;
+        }
+
         #qr-reader a {
           display: inline-block !important;
           margin-top: 8px !important;
