@@ -3,16 +3,16 @@
    ============================================ */
 
 :root {
-  --primary: #00B14F;
-  --primary-deep: #008A3D;
-  --primary-tint: #E8F8EE;
+  --primary: #099153;
+  --primary-deep: #06703f;
+  --primary-tint: #e6f4ed;
+  --orange: #f46b23;
+  --orange-tint: #fef0e6;
   --paper: #ffffff;
   --wash: #F5F6F8;
   --ink: #1A1A2E;
   --muted: #8C8C9A;
   --line: #EBEBEF;
-  --accent: #F59E0B;
-  --accent-tint: #FEF3C7;
   --danger: #EF4444;
   --danger-tint: #FEF2F2;
   --radius: 16px;
@@ -42,7 +42,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px 16px 48px;
+  padding: 96px 16px 48px;
   animation: fade-up 0.45s ease-out;
   max-width: 480px;
   margin: 0 auto;
@@ -59,31 +59,31 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 32px 20px 40px;
+  padding: 96px 20px 40px;
   animation: fade-up 0.5s ease-out;
 }
 
 /* Logo */
 .home-logo {
   width: 76px; height: 76px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 100%);
+  background: var(--primary);
   border-radius: 22px;
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 28px;
-  box-shadow: 0 8px 24px rgba(0, 177, 79, 0.25);
+  box-shadow: 0 8px 24px rgba(9, 145, 83, 0.25);
   position: relative;
 }
 .home-logo .badge {
   position: absolute; bottom: -5px; right: -5px;
   background: white; border-radius: 50%; padding: 2px;
-  color: var(--primary); line-height: 0;
+  color: var(--orange); line-height: 0;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* Pill badge */
+/* Pill badge — orange text highlight */
 .home-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  color: #92400E; background: #FEF9C3;
+  color: var(--orange); background: var(--orange-tint);
   padding: 5px 14px; border-radius: 999px;
   font-size: 12px; font-weight: 600;
   margin-bottom: 16px;
@@ -100,7 +100,7 @@ body {
   border-radius: 14px !important;
   font-size: 16px !important; font-weight: 700 !important;
   background: var(--primary) !important; color: white !important;
-  box-shadow: 0 6px 20px rgba(0, 177, 79, 0.25) !important;
+  box-shadow: 0 6px 20px rgba(9, 145, 83, 0.25) !important;
   border: none !important;
   transition: transform 0.15s !important;
   letter-spacing: 0.3px;
@@ -133,7 +133,7 @@ body {
   font-size: 13px; font-weight: 700; color: var(--ink);
   display: flex; align-items: center; gap: 5px;
 }
-.manual-card-header .label::after { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.manual-card-header .label::after { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--orange); }
 .manual-card-header .hint { font-size: 11px; color: var(--muted); }
 .manual-input-row {
   display: flex; align-items: center;
@@ -153,6 +153,7 @@ body {
   height: 38px !important; border-radius: 10px !important;
   padding: 0 16px !important; font-size: 13px !important; font-weight: 700 !important;
   white-space: nowrap;
+  background: var(--primary) !important; color: white !important; border: none !important;
 }
 .manual-hint {
   margin-top: 10px; display: flex; gap: 6px;
@@ -199,8 +200,8 @@ body {
 /* Session info card */
 .session-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .session-tag {
-  font-size: 12px; font-weight: 600; color: var(--primary);
-  background: var(--primary-tint); padding: 4px 10px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; color: var(--orange);
+  background: var(--orange-tint); padding: 4px 10px; border-radius: 8px;
   display: inline-flex; align-items: center; gap: 4px;
 }
 .session-status {
@@ -263,7 +264,7 @@ body {
   border-radius: 14px !important;
   font-size: 15px !important; font-weight: 700 !important;
   background: var(--primary) !important; color: white !important;
-  box-shadow: 0 6px 16px rgba(0, 177, 79, 0.2) !important;
+  box-shadow: 0 6px 16px rgba(9, 145, 83, 0.2) !important;
   border: none !important;
   transition: transform 0.15s !important;
   letter-spacing: 0.3px;

@@ -340,7 +340,7 @@ export function CheckinPage() {
           <div className="card form-card">
             <div className="form-header">
               <span>Mã sinh viên</span>
-              <span style={{ color: 'var(--primary)' }}>
+              <span style={{ color: 'var(--orange)' }}>
                 <Icon icon="zi-edit-text" size={12} /> Nhập tay
               </span>
             </div>

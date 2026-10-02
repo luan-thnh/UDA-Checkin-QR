@@ -125,7 +125,7 @@ export function SessionsPanel() {
           <h2 className="text-2xl font-bold text-slate-800">Quản lý Phiên Điểm Danh</h2>
           <p className="text-slate-500 mt-1">Tạo mã QR và theo dõi điểm danh realtime</p>
         </div>
-        <button className="btn bg-accent text-white hover:bg-accent-dark focus:ring-accent shadow-md shadow-accent/20" onClick={() => setIsCreating(!isCreating)}>
+        <button className="btn bg-primary text-white hover:bg-primary-dark focus:ring-primary shadow-md shadow-primary/20" onClick={() => setIsCreating(!isCreating)}>
           <Plus size={18} className="mr-2" /> Tạo Phiên Mới
         </button>
       </div>
@@ -218,7 +218,7 @@ export function SessionsPanel() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
                     <h4 className="font-bold text-slate-800 text-lg">{session.title}</h4>
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${session.status === 'active' ? 'bg-success-tint text-success border border-success/20' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${session.status === 'active' ? 'bg-accent-tint text-accent border border-accent/20' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
                       {session.status === 'active' ? 'Đang mở' : 'Đã đóng'}
                     </span>
                   </div>
@@ -275,7 +275,7 @@ export function SessionsPanel() {
       {qrSession && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-accent p-6 text-center text-white">
+            <div className="bg-primary p-6 text-center text-white">
               <h3 className="text-xl font-bold">{qrSession.title}</h3>
               {qrSession.subject && <p className="opacity-90 text-sm mt-1">{qrSession.subject}</p>}
             </div>

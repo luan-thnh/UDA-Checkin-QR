@@ -38,7 +38,7 @@ export function StatusCard({ code, message, checkedAt }: Props) {
   const type = CLASS_BY_CODE[code];
   
   let iconColor = 'var(--primary-deep)';
-  if (type === 'warn') iconColor = '#B45309';
+  if (type === 'warn') iconColor = '#f46b23';
   if (type === 'fail') iconColor = 'var(--danger)';
 
   return (
