@@ -124,6 +124,8 @@ export async function closeSession(sessionId: string): Promise<CheckinSession> {
 
 export async function deleteSession(sessionId: string): Promise<boolean> {
   if (!supabase) return false;
+  // Delete attendances first to avoid foreign key constraints and orphan data
+  await supabase.from('attendances').delete().eq('session_id', sessionId);
   const { error } = await supabase.from('sessions').delete().eq('id', sessionId);
   return !error;
 }

@@ -171,7 +171,7 @@ export function SessionsPanel() {
                   <button className="btn btn-ghost" onClick={() => fetchAttendances(session.id).then(setDetail).catch(() => alert('Lỗi tải dữ liệu'))}>
                     <List size={16} className="mr-2" /> Live
                   </button>
-                  <button className="btn btn-ghost" onClick={() => downloadWithAuth(`/api/sessions/${session.id}?action=export`, `diem-danh-${session.id}.csv`)}>
+                  <button className="btn btn-ghost" onClick={() => downloadWithAuth(`/api/sessions/${session.id}/export`, `diem-danh-${session.id}.csv`)}>
                     <Download size={16} className="mr-2" /> Xuất
                   </button>
                   {session.status === 'active' && (

@@ -48,7 +48,7 @@ export function fetchStudents(query: string): Promise<Student[]> {
 export function importStudents(
   rows: unknown[],
 ): Promise<{ imported: number; skipped: Array<{ row: number; reason: string }> }> {
-  return request('/api/students', { method: 'POST', body: JSON.stringify({ rows }) });
+  return request('/api/students/import', { method: 'POST', body: JSON.stringify({ rows }) });
 }
 
 export function studentsExportUrl(): string {
@@ -77,15 +77,15 @@ export function createSession(input: {
 }
 
 export function closeSession(sessionId: string): Promise<CheckinSession> {
-  return request(`/api/sessions/${encodeURIComponent(sessionId)}?action=close`, { method: 'POST' });
+  return request(`/api/sessions/${encodeURIComponent(sessionId)}/close`, { method: 'POST' });
 }
 
 export function deleteSession(sessionId: string): Promise<{ deleted: boolean }> {
-  return request(`/api/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+  return request(`/api/sessions/${encodeURIComponent(sessionId)}/delete`, { method: 'DELETE' });
 }
 
 export function deleteStudent(studentCode: string): Promise<{ deleted: boolean }> {
-  return request(`/api/students?studentCode=${encodeURIComponent(studentCode)}`, { method: 'DELETE' });
+  return request(`/api/students/${encodeURIComponent(studentCode)}`, { method: 'DELETE' });
 }
 
 export function deleteClass(className: string): Promise<{ deleted: number }> {
@@ -99,7 +99,7 @@ export interface AttendanceListData {
 }
 
 export function fetchAttendances(sessionId: string): Promise<AttendanceListData> {
-  return request(`/api/sessions/${encodeURIComponent(sessionId)}?action=attendances`);
+  return request(`/api/sessions/${encodeURIComponent(sessionId)}/attendances`);
 }
 
 export function fetchAllAttendances(): Promise<Array<Record<string, string | number>>> {
