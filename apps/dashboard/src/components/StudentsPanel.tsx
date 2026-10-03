@@ -432,24 +432,31 @@ export function StudentsPanel() {
 
       {/* Student Detail Modal */}
       {selectedStudent && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200" onClick={() => setSelectedStudent(null)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="bg-primary p-5 flex justify-between items-start text-white">
-              <div>
-                <h3 className="text-xl font-bold">{selectedStudent.fullName}</h3>
-                <div className="text-primary-light text-sm mt-1 flex gap-4">
-                  <span>MSSV: {selectedStudent.studentCode}</span>
-                  <span>Lớp: {selectedStudent.className}</span>
-                  {selectedStudent.subject && <span>Môn học: {selectedStudent.subject}</span>}
-                  {selectedStudent.faculty && <span>Khoa: {selectedStudent.faculty}</span>}
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in zoom-in-95 duration-200" onClick={() => setSelectedStudent(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-primary to-primary-dark p-6 sm:p-8 flex justify-between items-start text-white flex-shrink-0">
+              <div className="flex items-center gap-5">
+                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/30 shadow-inner hidden sm:flex">
+                  <span className="text-2xl font-bold">{selectedStudent.fullName.charAt(0)}</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-extrabold tracking-tight">{selectedStudent.fullName}</h3>
+                  <div className="text-primary-light text-sm mt-2 flex flex-wrap gap-x-6 gap-y-2 font-medium">
+                    <span className="flex items-center gap-1.5"><span className="opacity-70">MSSV:</span> {selectedStudent.studentCode}</span>
+                    <span className="flex items-center gap-1.5"><span className="opacity-70">Lớp:</span> {selectedStudent.className}</span>
+                    {selectedStudent.subject && <span className="flex items-center gap-1.5"><span className="opacity-70">Môn học:</span> {selectedStudent.subject}</span>}
+                    {selectedStudent.faculty && <span className="flex items-center gap-1.5"><span className="opacity-70">Khoa:</span> {selectedStudent.faculty}</span>}
+                  </div>
                 </div>
               </div>
-              <button className="text-white/70 hover:text-white transition-colors" onClick={() => setSelectedStudent(null)}>
+              <button className="text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-colors backdrop-blur-md" onClick={() => setSelectedStudent(null)}>
                 <X size={24} />
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto bg-slate-50">
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto bg-slate-50/50">
               <div className="p-5">
                 <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
                   <CheckCircle2 size={18} className="text-accent" /> 

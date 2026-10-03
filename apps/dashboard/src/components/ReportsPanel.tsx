@@ -238,18 +238,27 @@ export function ReportsPanel() {
                 <tr>
                   <th className="table-th sticky left-0 z-20 bg-slate-50 min-w-[220px] shadow-[1px_0_0_0_#e2e8f0]">Sinh viên</th>
                   <th className="table-th text-center">Lớp</th>
-                  {filteredSessions.map(session => (
-                    <th key={session.id} className="table-th text-center min-w-[120px]">
-                      <div className="font-semibold text-slate-700 whitespace-nowrap" title={session.title}>
-                        {session.title}
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        {session.startsAt && !isNaN(new Date(session.startsAt).getTime()) 
-                          ? new Date(session.startsAt).toLocaleDateString('vi-VN') 
-                          : ''}
-                      </div>
-                    </th>
-                  ))}
+                  {filteredSessions.map(session => {
+                    // Lược bỏ chữ "Điểm danh" mặc định để header gọn hơn
+                    let cleanTitle = session.title.replace(/^điểm danh\s*/i, '').trim();
+                    const dateStr = session.startsAt && !isNaN(new Date(session.startsAt).getTime()) 
+                      ? new Date(session.startsAt).toLocaleDateString('vi-VN') 
+                      : '';
+                    if (!cleanTitle) cleanTitle = dateStr;
+                    
+                    return (
+                      <th key={session.id} className="table-th text-center min-w-[100px]">
+                        <div className="font-semibold text-slate-700" title={session.title}>
+                          {cleanTitle}
+                        </div>
+                        {dateStr && cleanTitle !== dateStr && !cleanTitle.includes(dateStr) && (
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            {dateStr}
+                          </div>
+                        )}
+                      </th>
+                    );
+                  })}
                   <th className="table-th text-center sticky right-0 z-20 bg-primary-light text-primary-dark shadow-[-1px_0_0_0_#e2e8f0]">Tổng</th>
                 </tr>
               </thead>
