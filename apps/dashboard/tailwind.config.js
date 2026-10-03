@@ -16,6 +16,7 @@ export default {
           DEFAULT: '#f46b23',
           dark: '#d4570f',
           light: '#fef0e6',
+          tint: '#fef6f0',
         },
         success: {
           DEFAULT: '#099153',
@@ -26,8 +27,12 @@ export default {
           DEFAULT: '#ef4444',
           tint: '#fee2e2',
         }
-      }
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
     },
   },
   plugins: [],
 }
+
