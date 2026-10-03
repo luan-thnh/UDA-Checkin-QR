@@ -23,5 +23,31 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/sessions/:id/attendances",
+      "destination": "/api/sessions/:id?action=attendances"
+    },
+    {
+      "source": "/api/sessions/:id/export",
+      "destination": "/api/sessions/:id?action=export"
+    },
+    {
+      "source": "/api/sessions/:id/close",
+      "destination": "/api/sessions/:id?action=close"
+    },
+    {
+      "source": "/api/sessions/:id/delete",
+      "destination": "/api/sessions/:id"
+    },
+    {
+      "source": "/api/students/import",
+      "destination": "/api/students"
+    },
+    {
+      "source": "/api/students/:code",
+      "destination": "/api/students?studentCode=:code"
+    }
   ]
 }
