@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { X, Navigation, Check } from 'lucide-react';
@@ -87,7 +88,7 @@ export function MapModal({ initialLat, initialLng, onConfirm, onClose }: MapModa
     }
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col h-[80vh] max-h-[700px]">
         {/* Header */}
@@ -132,6 +133,7 @@ export function MapModal({ initialLat, initialLng, onConfirm, onClose }: MapModa
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Student } from '@checkin/shared';
 import { fetchStudents, importStudents, downloadWithAuth } from '../services/api';
@@ -431,8 +432,8 @@ export function StudentsPanel() {
       </div>
 
       {/* Student Detail Modal */}
-      {selectedStudent && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in zoom-in-95 duration-200" onClick={() => setSelectedStudent(null)}>
+      {selectedStudent && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in zoom-in-95 duration-200" onClick={() => setSelectedStudent(null)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-primary to-primary-dark p-6 sm:p-8 flex justify-between items-start text-white flex-shrink-0">
@@ -492,7 +493,8 @@ export function StudentsPanel() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

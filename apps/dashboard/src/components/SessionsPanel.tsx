@@ -1,4 +1,5 @@
 import { Suspense, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { buildSessionDeepLink, type CheckinSession } from '@checkin/shared';
 import { QRCodeSVG } from 'qrcode.react';
@@ -203,13 +204,13 @@ export function SessionsPanel() {
       </div>
 
       {/* QR Code Modal Overlay */}
-      {qrSession && (
+      {qrSession && createPortal(
         (() => {
           const actualQrPayload = qrMode === 'web' 
             ? `${window.location.origin}/c/${qrSession.id}` 
             : (qrSession.qrPayload ?? buildSessionDeepLink(import.meta.env.VITE_MINI_APP_ID || '4134446949382821265', qrSession.id));
           return (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="bg-primary p-6 text-center text-white">
               <h3 className="text-xl font-bold">{qrSession.title}</h3>
@@ -242,12 +243,12 @@ export function SessionsPanel() {
           </div>
         </div>
       );
-    })()
+    })(), document.body
   )}
 
       {/* Live Detail Modal */}
-      {detail && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      {detail && createPortal(
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
               <div>
@@ -290,7 +291,8 @@ export function SessionsPanel() {
               </table>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
